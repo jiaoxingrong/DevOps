@@ -1,0 +1,145 @@
+#!/bin/bash -
+#php5.6 update
+
+DownUrl='http://package.brotlab.net:8086/package/bulid_php'
+ConfUrl='http://package.brotlab.net:8086/package/init'
+PHP_Pack='php-5.6.16.tar.gz'
+InstallPath='/application/php5.6.16'
+
+function php_bulid() {
+    #判断是否为EC2,来确认php-fpm运行用户
+    grep -q "Amazon Linux" /etc/issue
+    if [[ $? -ne 0 ]]; then
+        user='www'
+        id www || useradd www -s /sbin/nologin
+    else
+        user='ec2-user'
+    fi    
+    #判断cpu核心数
+    cpu_num=`cat /proc/cpuinfo |grep "processor"|wc -l`
+    curr_path=`pwd`
+    #安装依赖包
+    yum -y install libjpeg-devel libpng-devel freetype-devel aspell-devel libXpm-devel gettext-devel gmp-devel openldap-devel readline-devel libxslt-devel perl-DBI perl-DBD-Pg autoconf libjpeg libpng freetype libxml2 libxml2-devel zlib* glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel openldap openldap-devel nss_ldap openldap-clients openldap-servers gcc* libxml* sysstat libjpeg-devel aspell-devel libtiff-devel libXpm-devel gettext-devel gmp-devel openldap-devel readline-devel apr vim* libgearman libgearman-devel libxslt-devel expect libtool ntp vim-enhanced flex bison  automake ncurses-devel libXpm-devel gettext-devel pam-devel kernel libtool-ltdl-devel* pcre-devel bc libaio openssh-clients geoip geoip-devel jemalloc-devel libmcrypt-devel libmemcached libmemcached-devel postgresql-devel icu libicu libicu-devel wget
+    echo -e '/usr/local/lib\n/usr/local/lib64' >> /etc/ld.so.conf
+    ldconfig
+
+    #CentOS 使用yum无法安装libmcrypt，进行源码编译安装。
+    wget -q ${DownUrl}/libmcrypt-2.5.7.tar.gz
+    tar xf libmcrypt-2.5.7.tar.gz
+    cd libmcrypt-2.5.7
+    ./configure
+    make -j${cpu_num}
+    make install
+    cd ${curr_path}
+    rm -fr libmcrypt-2.5.7
+
+    #下载libmemcached扩展(使用yum安装没有开始sasl支持)和php5.6源码包，并编译安装。
+    wget -q ${DownUrl}/${PHP_Pack} ${DownUrl}/libmemcached-1.0.18.tar.gz
+    tar xf libmemcached-1.0.18.tar.gz
+    cd libmemcached-1.0.18
+    ./configure
+
+    #测试中CentOS 5.x 有些系统会编译失败，使用gcc44可以解决，如果失败，才会执行。
+    grep 'CentOS release 5.*' /etc/issue
+    if [[ $? -eq 0 ]]; then
+        # 使用gcc44来作为编译器
+        export CC="gcc44"
+        export CXX="g++44"
+        make -j${cpu_num}
+    else
+        make -j${cpu_num}
+    fi
+    make install
+    unset CC CXX
+    cd ${curr_path}
+    rm -fr libmemcached-1.0.18
+
+    #编译安装php5.6
+    [[ -e ${InstallPath} ]] && rm -fr ${InstallPath}
+    mkdir -p ${InstallPath}
+    tar xf ${PHP_Pack}
+    php_name=`echo ${PHP_Pack} |sed 's/.tar.gz//'`
+    cd ${php_name}
+    './configure'  "--prefix=${InstallPath}" "--with-config-file-path=${InstallPath}/etc" '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-mysql=mysqlnd' '--with-mysqli=mysqlnd' '--with-pdo-mysql=mysqlnd' '--with-iconv-dir' '--with-freetype-dir' '--with-jpeg-dir' '--with-png-dir' '--with-zlib' '--with-libxml-dir=/usr' '--enable-xml' '--disable-rpath' '--enable-bcmath' '--enable-shmop' '--enable-sysvsem' '--enable-inline-optimization' '--with-curl' '--enable-mbregex' '--enable-mbstring' '--with-mcrypt' '--enable-ftp' '--with-gd' '--enable-gd-native-ttf' '--with-openssl' '--with-mhash' '--enable-pcntl' '--enable-sockets' '--with-xmlrpc' '--enable-zip' '--enable-soap' '--with-gettext' '--enable-sysvshm' '--with-pdo-pgsql=' '--enable-sysvmsg' '--enable-intl'
+    make -j${cpu_num}
+    make install
+    cd ${curr_path}
+    rm -fr ${php_name}
+
+    #下载php-fpm.conf及php.ini
+    wget -q -P ${InstallPath}/etc/ ${ConfUrl}/php-fpm.conf.tpl ${ConfUrl}/php5.6.ini.tpl
+    #修改php-fpm运行用户
+    sed -i "s/@USER@/$user/g" ${InstallPath}/etc/php-fpm.conf.tpl
+    sed -i "s/127.0.0.1:9000/127.0.0.1:9009/" ${InstallPath}/etc/php-fpm.conf.tpl
+    sed -i "s#/application/php/#${InstallPath}/#" ${InstallPath}/etc/php-fpm.conf.tpl
+    #修改php扩展路径
+    sed -i "/^extension_dir/cextension_dir='${InstallPath}/lib/php/extensions/no-debug-non-zts-20131226/'" ${InstallPath}/etc/php5.6.ini.tpl
+    #改名
+    mv ${InstallPath}/etc/php-fpm.conf.tpl ${InstallPath}/etc/php-fpm.conf
+    mv ${InstallPath}/etc/php5.6.ini.tpl ${InstallPath}/etc/php.ini
+    #使用pecl安装memcached，igbinary,redis扩展
+    ${InstallPath}/bin/pecl  install  igbinary redis memcached
+    #将redis.so加入php.ini（默认文件中有memcached和igbinary）
+    echo 'extension = redis.so' >> ${InstallPath}/etc/php.ini
+    #安装composer
+    ${InstallPath}/bin/php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    ${InstallPath}/bin/php -r "if (hash_file('SHA384', 'composer-setup.php') === '92102166af5abdb03f49ce52a40591073a7b859a86e8ff13338cf7db58a19f7844fbc0bb79b2773bf30791e935dbd938') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+    ${InstallPath}/bin/php composer-setup.php --install-dir=${InstallPath}/bin --filename=composer
+    ${InstallPath}/bin/php -r "unlink('composer-setup.php');"
+    #判断当前路径及/etc/init.d/有没有php-fpm5.6的文件，下载php启动文件到/etc/init.d/
+    [[ -e ./php-fpm5.6 ]] && rm -f php-fpm5.6
+    [[ -e /etc/init.d/php-fpm5.6 ]] && mv /etc/init.d/php-fpm5.6{,_old}
+    wget -q -O php-fpm5.6 ${ConfUrl}/php-fpm && mv php-fpm5.6 /etc/init.d/
+    sed -i "s#/application/php#${InstallPath}#" /etc/init.d/php-fpm5.6
+    chmod +x /etc/init.d/php-fpm5.6
+    mkdir -p /data/logs/
+    chmod 777 /data/logs
+    /etc/init.d/php-fpm5.6 start
+}
+
+function php_install() {
+    read  -p '确认升级，将停止当前php服务。'
+
+    #找出当前环境变量中的php命令
+    php_path=`which php`
+    phpize_path=`which phpize`
+    phpconfig_path=`which php-config`
+    pecl_path=`which pecl`
+    composer_path=`which composer`
+
+    #重命名旧的php命令
+    [[ -e ${php_path} ]] && rm -f ${php_path}
+    [[ -e ${phpize_path} ]] && rm -f ${phpize_path}
+    [[ -e ${phpconfig_path} ]] && rm -f ${phpconfig_path}
+    [[ -e ${pecl_path} ]] && rm -f ${pecl_path}
+
+    # #将新的php命令链接到/usr/local/bin下
+    ln -s ${InstallPath}/bin/php /usr/local/bin/
+    ln -s ${InstallPath}/bin/phpize /usr/local/bin/
+    ln -s ${InstallPath}/bin/php-config /usr/local/bin/
+    ln -s ${InstallPath}/bin/pecl /usr/local/bin/
+    ln -s ${InstallPath}/bin/composer /usr/local/bin/
+
+    #停止旧的php-fpm并重命名旧的init文件和程序文件夹
+    [[ -e /etc/init.d/php-fpm ]] && /etc/init.d/php-fpm stop && mv /etc/init.d/php-fpm{,_old}
+    [[ -e '/application/php' ]] && mv /application/php{,_old}
+
+    #将新的程序文件夹链接为/application/php,init文件重命名为/etc/init.d/php-fpm
+    ln -s ${InstallPath} /application/php
+    mv /etc/init.d/php-fpm5.6 /etc/init.d/php-fpm
+    #更改端口为9000
+    sed -i 's/127.0.0.1:9009/127.0.0.1:9000/' ${InstallPath}/etc/php-fpm.conf
+    /etc/init.d/php-fpm restart
+}
+
+read -p '
+    1. 预配置运行在9009端口的php5.6
+    2. 升级替换当前运行的php
+' num
+
+case $num in
+    1 )
+       echo | php_bulid ;;
+    2 )
+       php_install ;;
+esac
