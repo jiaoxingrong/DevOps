@@ -259,7 +259,7 @@ fi
     /etc/init.d/php-fpm start
 }
 
-function php5.6_install(){
+function php56_install(){
     DownUrl='http://package.brotlab.net:8086/package/bulid_php'
     ConfUrl='http://package.brotlab.net:8086/package/init'
     PHP_Pack='php-5.6.16.tar.gz'
@@ -389,7 +389,7 @@ case $SET in
         mysql_install
         
         if [[ "$php_num" == "5.6" ]] || [[ "$php_num" == "" ]];then
-            php5.6_install
+            php56_install
         else
             php_install
         fi
