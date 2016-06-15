@@ -8,8 +8,8 @@ import time
 #
 #client = boto3.client(
 #    'route53',
-aws_access_key_id = 'AKIAIQ5GQ3R6RFJV72MQ'
-aws_secret_access_key = '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'
+aws_access_key_id = 'xx'
+aws_secret_access_key = 'xx'
 #
 #)
 #
