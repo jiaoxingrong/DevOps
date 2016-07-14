@@ -1,36 +1,34 @@
 #!/usr/bin/env python
-#coding: utf-8
+# coding: utf-8
 
 import boto3
 import time
 
-#today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+# today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 #
-#client = boto3.client(
+# client = boto3.client(
 #    'route53',
-aws_access_key_id = 'xx'
-aws_secret_access_key = 'xx'
 #
-#)
+# )
 #
-#hostedzone_res = client.list_hosted_zones()
-#HostedZoneIDs = [ hostedzone['Id'] for hostedzone in hostedzone_res['HostedZones']  ]
+# hostedzone_res = client.list_hosted_zones()
+# HostedZoneIDs = [ hostedzone['Id'] for hostedzone in hostedzone_res['HostedZones']  ]
 #
-#record_sets = client.list_resource_record_sets(
+# record_sets = client.list_resource_record_sets(
 #    HostedZoneId='/hostedzone/Z6PRES6OYXY7C',
 #
-#)
+# )
 #
-#record_sets_list = client.list_resource_record_sets(HostedZoneId)
-#for i in record_sets['ResourceRecordSets']:
-#print '%-20s%-6s%-20s' % (i['Name'],i['Type'],i['ResourceRecords'][0]['Value'])
+# record_sets_list = client.list_resource_record_sets(HostedZoneId)
+# for i in record_sets['ResourceRecordSets']:
+# print '%-20s%-6s%-20s' % (i['Name'],i['Type'],i['ResourceRecords'][0]['Value'])
 
 class Route53():
-    def __init__(self,key_id,secret_key,service):
+    def __init__(self,service):
         self.client = boto3.client(
             service,
-            aws_access_key_id = key_id,
-            aws_secret_access_key = secret_key
+            # aws_access_key_id=key_id,
+            # aws_secret_access_key = secret_key
         )
         self.today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
         self.export_filename = 'route53_export_' + self.today + '.csv'
@@ -45,8 +43,6 @@ class Route53():
     def GetRecords(self):
         HostedZones = self.client.list_hosted_zones()
         HostedZonesId = [ hostedzone['Id'] for hostedzone in HostedZones['HostedZones'] ]
-
-        Domain_list = []
 
         all_hosted_api_response = map(self.RequestAPI,HostedZonesId)
        # for zone_id in HostedZonesId:
@@ -70,5 +66,5 @@ class Route53():
 
         f.close()
 
-route53 = Route53(aws_access_key_id,aws_secret_access_key,'route53')
+route53 = Route53('route53')
 route53.GetRecords()
