@@ -66,7 +66,10 @@ class Route53():
         for record_set in domain_record_list:
             for record in record_set:
                 if record['Type'] in self.export_record_type:
-                    write_result = '%s,%s,%s\n' % (record['Name'],record['Type'],record['ResourceRecords'][0]['Value'])
+                    record_value = ''
+                    for value in record['ResourceRecords']:
+                        record_value += value['Value'] + ','
+                    write_result = '%s,%s,%s\n' % (record['Name'],record['Type'],record_value)
                     f.write(write_result)
 
         f.close()

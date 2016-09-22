@@ -57,11 +57,15 @@ class Route53():
         f = file(self.export_filename,'wa')
         for hosted_record in all_hosted_api_response:
             record_res = [ i for i in hosted_record['ResourceRecordSets']  ]
+            print record_res
 
             for record in record_res:
                 #Domain_list.append((record['Name'],record['Type'],record['ResourceRecords'][0]['Value']))
                 if record['Type'] in self.export_record_type:
-                    write_result = '%s,%s,%s\n' % (record['Name'],record['Type'],record['ResourceRecords'][0]['Value'])
+                    record_value = ''
+                    for value in record['ResourceRecords']:
+                        record_value += value['Value'] + ','
+                    write_result = '%s,%s,%s\n' % (record['Name'],record['Type'],record_value)
                     f.write(write_result)
 
         f.close()
