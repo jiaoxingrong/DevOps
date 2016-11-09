@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
+# author: Liu Yue
 
 import sys
+import time
 import json
 import urllib2
-from configparser import ConfigParser
+import re
 
-ZABBIX_URL = 'http://zabbix.com'
+ZABBIX_URL = 'http://s.zabbix.brotlab.net/zabbix/api_jsonrpc.php'
 URL_HEADER = {'Content-Type': 'application/json'}
-ZABBIX_USER = 'user'
-ZABBIX_PASS = 'pass'
-HOST_LIST_FILE = 'zbx_new.txt'
+ZABBIX_USER = 'legend'
+ZABBIX_PASS = 'p3ftcKcnyB4fhcX'
 
+hosturl = ('http://sq-iplist.oasgames.com/','http://unsq-iplist.oasgames.com/')
+hostkey = (2,1)
 
 class Zabbix_Python_API(object):
     def __init__(self):
@@ -34,7 +37,7 @@ class Zabbix_Python_API(object):
         request = urllib2.Request(self.url, data, headers=self.header)
         try:
             result = urllib2.urlopen(request)
-        except URLError as e:
+        except urllib2.URLError as e:
             print e.code
         else:
             response = json.loads(result.read())
@@ -45,7 +48,7 @@ class Zabbix_Python_API(object):
         request = urllib2.Request(self.url, data, headers=self.header)
         try:
             result = urllib2.urlopen(request)
-        except URLError as e:
+        except urllib2.URLError as e:
             if hasattr(e, 'reason'):
                 print 'Reason:', e.reason
             elif hasattr(e, 'code'):
@@ -119,13 +122,35 @@ class Zabbix_Python_API(object):
             print 'Get Template Error!'
             sys.exit(1)
 
-    def get_host_list(self, host_ip=[]):
+    def get_host_list(self, host_ip):
         data = json.dumps(
             {
                 'jsonrpc': '2.0',
                 'method': 'host.get',
                 'params': {
                     'output': ['hostid', 'name', 'status', 'host'],
+                    'selectInterface': ['ip'],
+                    'filter': {'interface': [host_ip]}
+                },
+                'auth': self.auth_id,
+                'id': 1,
+            }
+        )
+        res = self.get_data(data)
+        if res['result']:
+            host = res['result'][0]
+            return host['hostid']
+        else:
+            print 'Get Host Error!'
+
+    def get_host_in_group(self, group_name):
+        data = json.dumps(
+            {
+                'jsonrpc': '2.0',
+                'method': 'host.get',
+                'params': {
+                    'output': ['hostid', 'name', 'status', 'host'],
+                    'selectGroups': ['groupid', 'name'],
                     'selectInterfaces': ['ip'],
                 },
                 'auth': self.auth_id,
@@ -136,13 +161,12 @@ class Zabbix_Python_API(object):
         host_list = []
         if res['result']:
             for host in res['result']:
-                if host['status'] == '0':
-                    if host['interfaces'][0]['ip'] in host_ip:
-                        host_list.append(host['hostid'])
+                if host['groups'][0]['name'] == group_name:
+                    host_list.append(host['interfaces'][0]['ip'])
             return host_list
         else:
             print 'Get Host Error!'
-            sys.exit(1)
+            #sys.exit(1)
 
     def host_create(self, host_name, host_ip, group_id, temp_id):
         g_list = [{'groupid': group} for group in group_id]
@@ -160,7 +184,7 @@ class Zabbix_Python_API(object):
                             'useip': 1,
                             'ip': host_ip,
                             'dns': '',
-                            'port': '20050',
+                            'port': '10050',
                         },
                     ],
                     'groups': g_list,
@@ -178,16 +202,16 @@ class Zabbix_Python_API(object):
                 return 0
         else:
             print 'Add Host Error', host_ip
-	    print res
             return 0
 
     def host_del(self, host_ip):
-        host_id_list = self.get_host_list(host_ip)
+        host_id = self.get_host_list(host_ip)
+        print host_id
         data = json.dumps(
             {
                 'jsonrpc': '2.0',
                 'method': 'host.delete',
-                'params': host_id_list,
+                'params': [host_id],
                 'auth': self.auth_id,
                 'id': 1
             }
@@ -248,8 +272,14 @@ class Zabbix_Python_API(object):
         else:
             return 0
 
-    def proxy_update(self, proxy_name, host_list, keep_former_hosts=True):
+    def proxy_update(self, proxy_name, keep_former_hosts=True):
+
         proxy_id = self.get_proxy_id(proxy_name)
+        proxy_hosts = []
+
+        for us_host in us_hosts:
+            proxy_hosts.append(self.get_host_list(us_host))
+
         if keep_former_hosts:
             host_list.extend(self.get_proxy_id(proxy_name, True))
         data = json.dumps(
@@ -258,7 +288,7 @@ class Zabbix_Python_API(object):
                 'method': 'proxy.update',
                 'params': {
                     'proxyid': proxy_id,
-                    'hosts': host_list,
+                    'hosts': proxy_hosts,
                 },
                 'auth': self.auth_id,
                 'id': 1,
@@ -268,47 +298,70 @@ class Zabbix_Python_API(object):
         if 'result' in res.keys():
             print 'Proxy Update Success.'
 
+hosts = []
+us_hosts = []
+def genhost(url,key):
+    uniqhost1 = {}
+    uniqhost2 = {}
+    urldata1 = urllib2.urlopen(url[0]).read().split('\n')
+    urldata2 = urllib2.urlopen(url[1]).read().split('\n')
+    try:
+        for item in urldata1:
+            uniqhost1.setdefault(str(item.split()[key[0]]),item.split())
+        for item in urldata2:
+            uniqhost2.setdefault(str(item.split()[key[1]]),item.split())
+    except:
+        pass
+    hosts1 = uniqhost1.values()
+    hosts2 = uniqhost2.values()
+    us_hosts_re = re.compile('^337pt.*|^brazil.*|^broas.*|^naesp.*|^saesp.*')
+    for item in hosts1:
+        if us_hosts_re.findall(item[key[0]]):
+            us_hosts.append(item[key[0]])
+        tmphost1 = ['_'.join(item[:key[0]]),item[key[0]]]
+        hosts.append(tmphost1)
+    for item in hosts2:
+        tmphost2 = ['_'.join(item[:key[1]]),item[key[1]]]
+        hosts.append(tmphost2)
 
 def main():
+    genhost(hosturl,hostkey)
     zb = Zabbix_Python_API()
     # zabbix group name, 'api_test'
-    group_id = [zb.get_group_exist('pt_sqyz')]
+    group_id = [zb.get_group_exist('legend_online')]
     # group proxy name, 'proxy1'
     proxy_name = 'p1.zabbix.brotlab.net'
-    config = ConfigParser()
-    config.read(HOST_LIST_FILE)
     temp_id = [
-        # templates name
-        zb.get_template_id('Z-Template OS Linux'),
-        zb.get_template_id('Z-Template-ICMP and Agent depend proxy1')
-        #zb.get_template_id('shenqu_ping_test')
+        zb.get_template_id('shenqu_ping_test')
         ]
     host_list = []
-    for type in config.sections():
-        if type == 'DB':
-            temp_id = temp_id + [
-                # template_name
-                zb.get_template_id('Z-Template MySQL Port'),
-            ]
-        elif type == 'web':
-            temp_id = tem_id + [
-                zb.get_template_id('Z-Template App http and php'),
-            ]
-        elif type == 'web_db':
-            temp_id = tem_id + [
-                zb.get_template_id('Z-Template App MySQL'),
-                zb.get_template_id('Z-Template App http and php'),
-            ]
-        for host_ip in config.options(type):
-            if zb.host_create(config.get(type, host_ip),
+    host_in_group = zb.get_host_in_group('legend_online')
+
+    def ExecAdd():
+        for host in hosts:
+            try:
+                host_ip = host[1]
+            except:
+                pass
+            host_name = host[0]
+            if host_ip in host_list:
+                continue
+            host_list.append(host_ip)
+            if host_ip in host_in_group:
+                continue
+            if zb.host_create(host_name,
                               host_ip,
                               group_id,
                               temp_id):
                 print 'Add Host Success:', host_ip
-                host_list.append(host_ip)
-    host_id_list = zb.get_host_list(host_list)
-    #zb.proxy_update(proxy_name, host_id_list)
+        return 'ok'
 
+    if ExecAdd() == 'ok' and host_list:
+        for host in host_in_group:
+            if host not in host_list:
+                zb.host_del(host)
+                print 'Del Host:', host
+                time.sleep(10)
 
 if __name__ == '__main__':
     main()

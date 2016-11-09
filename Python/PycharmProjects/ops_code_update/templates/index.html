@@ -1,0 +1,21 @@
+{% extends 'base2.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{% block page_content %}
+    {% for name in brow %}
+        <h2>Hello,{{ name }}</h2>
+        <p>The local date and time is {{ moment(current_time).format('LLL') }}.</p>
+        <p>That was {{ moment(current_time).fromNow(refresh=True) }}.</p>
+    {% endfor %}
+    {% if form %}
+        {{ wtf.quick_form(form) }}
+    {% endif %}
+    {% if name %}
+        <h2>Hello,{{ name }}</h2>
+    {% else %}
+        <h2>Hello,Stranger</h2>
+    {% endif %} 
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+{% endblock %}

@@ -1,0 +1,46 @@
+{#    {% extends 'bootstrap/base.html' %}#}
+<head>
+{% block title %}<title>Flasky</title>{% endblock %}
+<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">
+</head>
+
+{% block navbar %}
+    <div class="navbar navbar-inverse" role="navigation">
+         <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle"
+                data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a href="/" class="navbar-brand">Flasky</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="/">Home</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% block page_content %}
+        <h6>author:Jerome</h6>
+    {% endblock %}
+</div>
+{% endblock %}
+
+<script src="{{ url_for('static',filename='moment.js') }}"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"></script>

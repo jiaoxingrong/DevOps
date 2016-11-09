@@ -3,7 +3,6 @@
 
 import boto3
 import time
-import os
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -28,7 +27,7 @@ def GetEC2(region):
 
     f = file(report_filename,'a')
     f.seek(0,2)
-    f.write('\n'+region+'\n')
+    #f.write('\n'+region+'\n')
 
     client = session.resource('ec2')
     for vpc_id in vpc_ids:
@@ -44,9 +43,11 @@ def GetEC2(region):
                     instance_ip = instance.classic_address.public_ip
                     instance_type = instance.instance_type
                     instance_launch_time = instance.launch_time
+                    instance_id = instance.instance_id
                 except:
                     print instance
-                write_result = '%s,%s,%s,%s,%s\n' % (instance_name,instance_type,instance_ip,instance_pri_ip,instance_launch_time)
+                # write_result = '%s,%s,%s,%s,%s,%s\n' % (instance_name, instance_type, instance_ip, instance_pri_ip, instance_launch_time, instance_id)
+                write_result = '%s,%s,%s,%s\n' % (instance_name, instance_type, instance_launch_time,region)
                 f.write(write_result)
     f.close()
 

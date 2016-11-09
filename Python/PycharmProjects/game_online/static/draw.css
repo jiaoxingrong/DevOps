@@ -1,0 +1,5 @@
+svg {font: 10px sans-serif;shape-rendering: crispEdges;}
+.axis path, .axis line{fill: none;stroke: #AAAAAA;shape-rendering: crispEdges;}
+.axis path {stroke: #FFB59E;stroke-width: 1.5px;}
+rect{fill: #ddd}
+.tips{display: none;}

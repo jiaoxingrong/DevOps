@@ -5,14 +5,14 @@ import pdb
 import urllib2
 import re
 import copy
-squrl = 'http://sq-iplist.oasgames.com'
-unsqurl = 'http://unsq-iplist.oasgames.com'
+squrl = ''
+unsqurl = ''
 sq_ip_field = 2
 unsq_ip_field = 1
 
-template = 'shenqu_ping_test'
-proxy_name = 'p1.zabbix.brotlab.net'
-group = 'legend_online'
+template = ''
+proxy_name = ''
+group = ''
 
 def GenHosts(hosturl,ip_field):
     try:
