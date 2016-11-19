@@ -92,4 +92,9 @@ ENV/
 
 *.csv
 .vscode/*
+<<<<<<< HEAD
+=======
+.vscode/
+.idea/*
+>>>>>>> 25966f1117509528e70ee12f292e1e3a7069ad5a
 .idea/
