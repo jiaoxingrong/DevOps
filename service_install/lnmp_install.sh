@@ -198,7 +198,7 @@ function nginx_bulid() {
 function mysql_install() {
     id mysql || useradd  mysql
     mkdir -p /data/logs /data/htdocs /data/mysqldata /data/mysqllogs/slow /data/mysqllogs/bin-log
-    chown $user:$user /data/htdocs
+    chown -R $user:$user /data/htdocs
     chown mysql:mysql /data/mysqldata
     chown -R mysql:mysql /data/mysqllogs /data/mysqldata
     chmod 777 /data/logs
@@ -447,4 +447,3 @@ case $SET in
     sh $0
     ;;
 esac
-

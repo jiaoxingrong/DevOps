@@ -1,12 +1,12 @@
 #!/bin/bash -
 #php5.6 update
+InstallPath='/application/php5.6.16'
 
 function php_bulid() {
     RAM=`egrep MemTotal /proc/meminfo  |awk '{print int($2/1024)}'`
     DownUrl='http://package.brotlab.net:8086/package/bulid_php'
     ConfUrl='http://package.brotlab.net:8086/package/init'
     PHP_Pack='php-5.6.16.tar.gz'
-    InstallPath='/application/php5.6.16'
 
     #判断是否为EC2,来确认php-fpm运行用户
     run_user='ec2-user'
@@ -81,9 +81,7 @@ function php_bulid() {
     mv ${InstallPath}/etc/php-fpm.conf.tpl ${InstallPath}/etc/php-fpm.conf
     mv ${InstallPath}/etc/php5.6.ini.tpl ${InstallPath}/etc/php.ini
     #使用pecl安装memcached，igbinary,redis扩展
-    ${InstallPath}/bin/pecl  install  igbinary redis memcached
-    #将redis.so加入php.ini（默认文件中有memcached和igbinary）
-    echo 'extension = redis.so' >> ${InstallPath}/etc/php.ini
+    ${InstallPath}/bin/pecl  install  igbinary memcache memcached
     #安装composer
     ${InstallPath}/bin/php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
     ${InstallPath}/bin/php 'composer-setup.php' --install-dir=${InstallPath}/bin --filename=composer
