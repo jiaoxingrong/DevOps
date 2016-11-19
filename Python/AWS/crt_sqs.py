@@ -24,8 +24,6 @@ QueueS = ['odp3-db-sync-us-odp-online-activity', 'odp3-db-sync-us-odp-online-art
 #     crt_queue('us-east-1',queue)
 
 session = boto3.session.Session(
-    # aws_access_key_id="AKIAIAU3JGOCFYFH7O6Q",
-    # aws_secret_access_key="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",
     region_name = 'ap-northeast-1'
 )
 client = session.client('dynamodb')
