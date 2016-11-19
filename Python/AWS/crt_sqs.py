@@ -6,8 +6,6 @@ import boto3
 
 def crt_queue(region,QName):
     session = boto3.session.Session(
-        # aws_access_key_id="AKIAIAU3JGOCFYFH7O6Q",
-        # aws_secret_access_key="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",
         region_name = region
     )
     sqs = session.client('sqs')
