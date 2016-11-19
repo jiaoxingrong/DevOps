@@ -93,4 +93,4 @@ ENV/
 *.csv
 .vscode/*
 .idea/*
-**/.idea/*
+.idea/
