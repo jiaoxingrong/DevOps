@@ -107,9 +107,11 @@ def create_route53_record(domain,record,action):
 
 # new_route53_record = {'naruto-en-cst-svr34.oasgames.com': 'elb-naruto-gameserver34-1012808580.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr19.oasgames.com': 'elb-naruto-gameserver19-1313480889.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr31.oasgames.com': 'elb-naruto-gameserver31-2080269691.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr30.oasgames.com': 'elb-naruto-gameserver30-1306144278.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr33.oasgames.com': 'elb-naruto-gameserver33-1507905167.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr32.oasgames.com': 'elb-naruto-gameserver32-433670128.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr26.oasgames.com': 'elb-naruto-gameserver26-1755228088.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr27.oasgames.com': 'elb-naruto-gameserver27-1819030021.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr24.oasgames.com': 'elb-naruto-gameserver24-1164603705.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr25.oasgames.com': 'elb-naruto-gameserver25-1467582608.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr22.oasgames.com': 'elb-naruto-gameserver22-1058696511.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr23.oasgames.com': 'elb-naruto-gameserver23-505838514.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr20.oasgames.com': 'elb-naruto-gameserver20-1813581714.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr21.oasgames.com': 'elb-naruto-gameserver21-933245012.ap-southeast-1.elb.amazonaws.com', 'naruto-en-cst-svr29.oasgames.com': 'elb-naruto-gameserver29-846623463.ap-southeast-1.elb.amazonaws.com'}
 
-update_domain = ['akes.oasgames.com', 'goges.oasgames.com', 'loel.oasgames.com']
+# update_domain = ['mbbpt.oasgames.com', 'mlobr.oasgames.com', 'mlode.oasgames.com', 'mloen.oasgames.com', 'mloes.oasgames.com', 'mloit.oasgames.com', 'mlonl.oasgames.com', 'mlopl.oasgames.com', 'mloru.oasgames.com', 'mlosv.oasgames.com', 'mlotr.oasgames.com', 'mlotw.oasgames.com', 'mphde.oasgames.com', 'mrfen.osasgames.com', 'mtcen.oasgames.com', 'mtcfr.oasgames.com', 'mtcru.oasgames.com', 'sandbox.mobile.oasgames.com']
+
+update_domain = ['mtcen.oasgames.com', 'mtcfr.oasgames.com', 'mtcru.oasgames.com', 'sandbox.mobile.oasgames.com']
 
 for domain in update_domain:
-    create_route53_record(domain,'d7hmch1g5l42c.cloudfront.net','UPSERT')
+    create_route53_record(domain,'d2cxfaeos9jwqa.cloudfront.net','UPSERT')
 
 # crt_elb(,'i-26584782')

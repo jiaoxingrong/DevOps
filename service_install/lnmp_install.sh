@@ -1,32 +1,23 @@
 #!/bin/bash -
 
-basedir=/application
-RAM2=`egrep MemTotal /proc/meminfo  |awk '{print int($2/1000/2)}'`
-wnic=`route -n | awk '{if($1~"^0.0.0.0")print $NF}'`
-ipout=`ifconfig $wnic  | grep "inet addr:" | awk '{print $2}' | awk -F: '{print $2}'`
-wnic=`route -n | awk '{if($1~"^0.0.0.0")print $NF}'`
-lnic=`route -n | awk '{print $NF}' |grep -E "eth|bond|em" | sort -u |grep -v "$wnic"`
+basedir='/application'
+RAM2=`egrep MemTotal /proc/meminfo  |awk '{print int($2/1024/2)}'`
+# wnic=(`route -n | awk '{if($1~"^0.0.0.0")print $NF}' | tr '\n' ' '`)
+# lnic=`route -n | awk '{print $NF}' |grep -E "eth|bond|em" | sort -u |egrep -v "$wnic"`
+user='ec2-user'
+id ${user} 2>1 >/dev/null || useradd ${user}
 
-if [ -z $lnic ]; then
-    ipin=`ifconfig $wnic | grep "inet addr:" | awk '{print $2}' | awk -F: '{print $2}'`
-else
-    ipin=`ifconfig $lnic | grep "inet addr:" | awk '{print $2}' | awk -F: '{print $2}'`
-fi
+# if [ -z $lnic ]; then
+#     ipin=`ifconfig $wnic | grep "inet addr:" | awk '{print $2}' | awk -F: '{print $2}'`
+# else
+#     ipin=`ifconfig $lnic | grep "inet addr:" | awk '{print $2}' | awk -F: '{print $2}'`
+# fi
 
 cpucount=`cat /proc/cpuinfo |grep "processor"|wc -l`
 #cpucount2=`echo "2 * $cpucount" | bc`
 cpucount2=`echo $((2*$cpucount))`
-
-grep -q "Amazon Linux" /etc/issue
-if [  $? -ne 0 ]; then
-   service iptables stop
-   sed -i 's/SELINUX=.*/SELINUX=disabled/' /etc/sysconfig/selinux
-   setenforce 0
-   user="www"
-   useradd $user &>/dev/null
-else
-   user="ec2-user"
-fi
+[[ -e /etc/sysconfig/selinux ]] && sed -i 's/SELINUX=.*/SELINUX=disabled/'
+setenforce 0
 
 #判断是否内网
 read -p '    是否为内网环境安装(回车否)[y/n]: ' if_lan
@@ -36,18 +27,18 @@ case ${if_lan} in
         initurl="http://10.1.9.200:8086/init/"
         ;;
     * )
+        DownUrl="http://d1aegnnxokxfi0.cloudfront.net"
         packdownurl="http://d1aegnnxokxfi0.cloudfront.net/package/"
         initurl="http://d1aegnnxokxfi0.cloudfront.net/package/init/"
-        ;;    
+        ;;
 esac
 
 #Nginx、php、mysql下载包名
 if `grep "CentOS release 5.* (Final)" /etc/issue >/dev/null`;then
     phppackname="php_el5.tgz"
-    nginxpackname="nginx_el5.tgz"
-else
-    nginxpackname="nginx_el6.tgz"
 fi
+
+nginxpackname='tengine-2.1.2.tar.gz'
 nginxconfname="nginx.conf.tpl"
 nginxinitname="nginx"
 phpinitname="php-fpm"
@@ -59,32 +50,32 @@ mysqlinitname="mysqld"
 #php版本选择
 function php_ver_choose() {
     read -p '
-    1. 5.5
-    2. 5.6
+    1. 5.6
+    2. 5.5
     3. 5.3
-    请输入要安装的php版本(默认5.5【5.3和5.6版本仅支持6.x的系统】): ' php_num
+    请输入要安装的php版本(默认5.6【5.3版本仅支持6.x的系统】): ' php_num
     case ${php_num} in
         1 )
-            phppackname="php_el6.tgz"
+            phppackname=6
             ;;
         2 )
-            phppackname="php5.6_el6.tgz"
+            phppackname="php_el6.tgz"
             ;;
         3 )
             phppackname="php5.3_el6.tgz"
             ;;
         * )
-            phppackname="php_el6.tgz"
+            phppackname=6
             ;;
     esac
 }
 
 #优化系统参数及配置
-function basic_parse_optimize() { 
+function basic_parse_optimize() {
     ls /etc/CHECKOAS/checkdir/checkfile &>/dev/null && return
     read -p "输入想要设置的主机名(回车不设置): " USERHOSTNAME
     if [ ! -z $USERHOSTNAME ]; then
-        sed -i "s/HOSTNAME=localhost.*/HOSTNAME=$USERHOSTNAME/" /etc/sysconfig/network
+        sed -i "s/HOSTNAME=.*/HOSTNAME=$USERHOSTNAME/" /etc/sysconfig/network
         hostname $USERHOSTNAME
     fi
 
@@ -93,12 +84,12 @@ function basic_parse_optimize() {
     ntpdate 1.centos.pool.ntp.org || exit 1
     /etc/init.d/ntpd start
     chkconfig ntpd on
-   
+
     modprobe bridge
     modprobe nf_conntrack
     echo "modprobe bridge">> /etc/rc.local
     echo "modprobe nf_conntrack">> /etc/rc.local
-    echo 'export PS1="\[\033[01;31m\]\u\[\033[0;37m\]@\[\033[32m\]\h.$add \[\033[0;33m\]\w\[\033[0;36m\]\\$ \[\033[37m\]"' >> /etc/profile
+    echo 'export PS1="\[\033[01;31m\]\u\[\033[0;37m\]@\[\033[32m\]\H.$add \[\033[0;33m\]\w\[\033[0;36m\]\\$ \[\033[37m\]"' >> /etc/profile
     source /etc/profile
 cat >>/etc/rc.local<<EOF
 ulimit -SHn 655350
@@ -125,10 +116,6 @@ net.ipv4.tcp_synack_retries = 1
 net.core.somaxconn = 16384
 net.core.netdev_max_backlog = 16384
 net.ipv4.tcp_max_orphans = 16384
-EOF
-
-if [ $user != "ec2-user" ]; then
-    cat >>/etc/sysctl.conf<<EOF
 net.nf_conntrack_max = 25000000
 net.netfilter.nf_conntrack_max = 25000000
 net.netfilter.nf_conntrack_tcp_timeout_established = 180
@@ -136,7 +123,6 @@ net.netfilter.nf_conntrack_tcp_timeout_time_wait = 120
 net.netfilter.nf_conntrack_tcp_timeout_close_wait = 60
 net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 120
 EOF
-fi
     sysctl -p
     mkdir -p /etc/CHECKOAS/checkdir && echo "This is an scripts check file ,don't delete!" > /etc/CHECKOAS/checkdir/checkfile
 }
@@ -145,36 +131,19 @@ function init_yum_install() {
     yum clean all
     yum install epel-release -y
     sed -i 's/https/http/'  /etc/yum.repos.d/epel.repo
-    yum -y install libjpeg-devel libpng-devel freetype-devel aspell-devel libXpm-devel gettext-devel gmp-devel openldap-devel readline-devel libxslt-devel perl-DBI perl-DBD-Pg autoconf libjpeg libpng freetype libxml2 libxml2-devel zlib* glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel openldap openldap-devel nss_ldap openldap-clients openldap-servers gcc* libxml* sysstat libjpeg-devel aspell-devel libtiff-devel libXpm-devel gettext-devel gmp-devel openldap-devel readline-devel apr vim* libgearman libgearman-devel libxslt-devel expect libtool ntp vim-enhanced flex bison  automake ncurses-devel libXpm-devel gettext-devel pam-devel kernel libtool-ltdl-devel* pcre-devel bc libaio openssh-clients geoip geoip-devel jemalloc-devel libmcrypt-devel libmemcached libmemcached-devel postgresql-devel
+    yum -y --skip-broken install libjpeg-devel libpng-devel freetype-devel aspell-devel libXpm-devel gettext-devel gmp-devel openldap-devel readline-devel libxslt-devel perl-DBI perl-DBD-Pg autoconf libjpeg libpng freetype libxml2 libxml2-devel zlib* glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel openldap openldap-devel nss_ldap openldap-clients openldap-servers gcc* libxml* sysstat libjpeg-devel aspell-devel libtiff-devel libXpm-devel gettext-devel gmp-devel openldap-devel readline-devel apr vim* libgearman libgearman-devel libxslt-devel expect libtool ntp vim-enhanced flex bison  automake ncurses-devel libXpm-devel gettext-devel pam-devel kernel libtool-ltdl-devel* pcre-devel bc libaio openssh-clients geoip geoip-devel jemalloc-devel libmcrypt-devel libmemcached libmemcached-devel postgresql-devel icu libicu libicu-devel wget git
 }
 
 function iptables_install() {
 grep -q "Amazon Linux" /etc/issue
 if [ $? -ne 0 ]; then
     ls /root/init_iptables.sh &>/dev/null && mv /root/init_iptables.sh /root/init_iptables.sh.bak
-cat >>/root/init_iptables.sh<<EOF
-#!/bin/bash
-
-wnic=`route -n | awk '{if($1~"^0.0.0.0")print $NF}'`
-lnic=`route -n | awk '{print $NF}' |grep -E "eth|bond" | sort -u |grep -v "$wnic"`
-service iptables stop
-iptables -F
-iptables -P OUTPUT ACCEPT
-iptables -A INPUT -p icmp -j ACCEPT
-iptables -A INPUT -p tcp  -s 124.205.66.66 -j ACCEPT
-iptables -A INPUT -p tcp  -s 185.19.217.113 -j ACCEPT
-iptables -A INPUT -p tcp  -s 54.64.224.48 -j ACCEPT
-iptables -A INPUT -p tcp  -s 54.254.214.247 -j ACCEPT
-iptables -A INPUT -p tcp -i $wnic -m multiport --dport 80,443,8001 -j ACCEPT
-iptables -A INPUT -p all -i $lnic -j ACCEPT
-iptables -A INPUT -p all -i lo -j ACCEPT
-iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -P INPUT DROP
-iptables-save > /etc/sysconfig/iptables
-service iptables start
-EOF
-chmod +x /root/init_iptables.sh
-sh /root/init_iptables.sh && rm -f /root/init_iptables.sh
+    mkdir -p /data/scripts
+    wget -q -P /data/scripts $DownUrl/iptables.sh
+    chmod +x /data/scripts/iptables.sh
+    sh /data/scripts/iptables.sh
+    chkconfig iptables on
+    service iptables save
 fi
 }
 
@@ -197,13 +166,38 @@ cat >>/etc/ld.so.conf<<EOF
 EOF
 fi
     ldconfig
+    ln -s ${basedir}/nginx /usr/local/
+    egrep -qx "/etc/init.d/nginx start" /etc/rc.local || echo  "/etc/init.d/nginx start" >> /etc/rc.local
+    /etc/init.d/nginx start
+}
+
+function nginx_bulid() {
+    mkdir -p $basedir /data/logs /data/htdocs
+    chmod 777 /data/logs
+    rpm -qa |grep wget &>/dev/null|| yum install wget -y &>/dev/null
+    wget -q $packdownurl$nginxpackname  'http://d1aegnnxokxfi0.cloudfront.net/package/nginx_conf.tar.gz'
+    wget -q -P /etc/init.d/ $initurl$nginxinitname
+    tar xf $nginxpackname
+    nginx_dir=`echo ${nginxpackname} |sed 's/.tar.gz//'`
+    cd ${nginx_dir}
+    ./configure --user=ec2-user --group=ec2-user --prefix=$basedir/nginx --with-http_stub_status_module --with-http_ssl_module --with-http_gzip_static_module --with-ipv6 --with-http_geoip_module --with-pcre --with-jemalloc
+    make && make install
+    cd ..
+    tar xf 'nginx_conf.tar.gz' -C $basedir/nginx/conf/
+    chmod +x /etc/init.d/nginx
+    mkdir  /application/nginx/status
+    mv -f $basedir/nginx/conf/nginx.conf.tpl $basedir/nginx/conf/nginx.conf
+    sed -i  -e "s/@USER@/${user}/g" -e "s/@CPUCOUNT@/${cpucount}/g" $basedir/nginx/conf/nginx.conf
+    cp ${basedir}/nginx/html/* /data/htdocs/
+    ln -s ${basedir}/nginx /usr/local/
+    ln -s ${basedir}/nginx/sbin/nginx /usr/local/bin
     egrep -qx "/etc/init.d/nginx start" /etc/rc.local || echo  "/etc/init.d/nginx start" >> /etc/rc.local
     /etc/init.d/nginx start
 }
 
 function mysql_install() {
     id mysql || useradd  mysql
-    mkdir -p /data/logs /data/htdocs /data/mysqldata /data/mysqllogs/slow /data/mysqllogs/bin-log 
+    mkdir -p /data/logs /data/htdocs /data/mysqldata /data/mysqllogs/slow /data/mysqllogs/bin-log
     chown $user:$user /data/htdocs
     chown mysql:mysql /data/mysqldata
     chown -R mysql:mysql /data/mysqllogs /data/mysqldata
@@ -216,7 +210,7 @@ function mysql_install() {
     mv -f $mysqlconfname /etc/my.cnf
     mv -f $mysqlinitname /etc/init.d/mysqld
     chmod +x /etc/init.d/mysqld
-    sed -i  -e "/bind-address/s/@IPIN@/$ipin/g" -e "/thread_concurrency/s/@CPUCOUNT@/$cpucount/g" -e "/innodb_buffer_pool_size/s/@RAM2@/$RAM2/g" -e "/innodb_thread_concurrency/s/@CPUCOUNT@/$cpucount/g" /etc/my.cnf
+    sed -i  -e "/bind-address/s/@IPIN@/127.0.0.1/g" -e "/thread_concurrency/s/@CPUCOUNT@/$cpucount/g" -e "/innodb_buffer_pool_size/s/@RAM2@/$RAM2/g" -e "/innodb_thread_concurrency/s/@CPUCOUNT@/$cpucount/g" /etc/my.cnf
     /usr/local/mysql/scripts/mysql_install_db --basedir=/usr/local/mysql --datadir=/data/mysqldata --defaults-file=/etc/my.cnf --user=mysql
     MYSQLBIN_PATH="/usr/local/mysql/bin"
     egrep -q '(^PATH=|^export PATH=)' /etc/profile  || echo "PATH=$MYSQLBIN_PATH:\$PATH:"  >> /etc/profile
@@ -232,7 +226,10 @@ function mysql_install() {
 function php_install() {
     mkdir -p /application/ /data/logs  /data/htdocs
     chmod 777 /data/logs
-    rpm -qa |grep wget &>/dev/null|| yum install wget -y &>/dev/null
+    if [[ ${phppackname} -eq 6 ]]; then
+        php_bulid
+        return
+    fi
     wget $packdownurl$phppackname  $initurl$phpinitname >/dev/null
     tar xf $phppackname -C $basedir && rm  -f $phppackname
     wget -q -P $basedir/php/etc/ $initurl$phpconfname
@@ -256,18 +253,21 @@ fi
     ln -s $basedir/php/bin/php-config /usr/local/bin/
     ln -s $basedir/php/bin/phpize /usr/local/bin/
     ln -s $basedir/php/bin/composer /usr/local/bin/
+    ln -s $basedir/php /usr/local/
     /etc/init.d/php-fpm start
 }
 
-function php56_install(){
+function php_bulid() {
     DownUrl='http://package.brotlab.net:8086/package/bulid_php'
     ConfUrl='http://package.brotlab.net:8086/package/init'
     PHP_Pack='php-5.6.16.tar.gz'
     InstallPath='/application/php'
 
-    curr_path=`pwd`
-    echo -e '/usr/local/lib\n/usr/local/lib64' >> /etc/ld.so.conf
+    [[ -e '/usr/local/lib64' ]] && grep -q '/usr/local/lib64' /etc/ld.so.conf || echo '/usr/local/lib64' >> /etc/ld.so.conf
+    grep -q '/usr/local/lib' /etc/ld.so.conf || echo '/usr/local/lib' >> /etc/ld.so.conf
+    ln -s /usr/lib64/libssl.so /usr/lib/
     ldconfig
+
     #CentOS 使用yum无法安装libmcrypt，进行源码编译安装。
     wget -q ${DownUrl}/libmcrypt-2.5.7.tar.gz
     tar xf libmcrypt-2.5.7.tar.gz
@@ -279,10 +279,9 @@ function php56_install(){
     rm -fr libmcrypt-2.5.7
 
     #下载libmemcached扩展(使用yum安装没有开始sasl支持)和php5.6源码包，并编译安装。
-    wget -q ${DownUrl}/libmemcached-1.0.18.tar.gz
+    wget -q ${DownUrl}/${PHP_Pack} ${DownUrl}/libmemcached-1.0.18.tar.gz
     tar xf libmemcached-1.0.18.tar.gz
     cd libmemcached-1.0.18
-    ./configure
 
     #测试中CentOS 5.x 有些系统会编译失败，使用gcc44可以解决，如果失败，才会执行。
     grep 'CentOS release 5.*' /etc/issue
@@ -290,23 +289,26 @@ function php56_install(){
         # 使用gcc44来作为编译器
         export CC="gcc44"
         export CXX="g++44"
+        ./configure
         make -j${cpu_num}
+        make install
+        unset CC CXX
     else
+        ./configure
         make -j${cpu_num}
+        make install
     fi
-    make install
-    unset CC CXX
     cd ${curr_path}
     rm -fr libmemcached-1.0.18
 
     #编译安装php5.6
-    wget -q ${DownUrl}/${PHP_Pack}
     [[ -e ${InstallPath} ]] && rm -fr ${InstallPath}
     mkdir -p ${InstallPath}
     tar xf ${PHP_Pack}
     php_name=`echo ${PHP_Pack} |sed 's/.tar.gz//'`
     cd ${php_name}
-    './configure'  "--prefix=${InstallPath}" "--with-config-file-path=${InstallPath}/etc" '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-mysql=mysqlnd' '--with-mysqli=mysqlnd' '--with-pdo-mysql=mysqlnd' '--with-iconv-dir' '--with-freetype-dir' '--with-jpeg-dir' '--with-png-dir' '--with-zlib' '--with-libxml-dir=/usr' '--enable-xml' '--disable-rpath' '--enable-bcmath' '--enable-shmop' '--enable-sysvsem' '--enable-inline-optimization' '--with-curl' '--enable-mbregex' '--enable-mbstring' '--with-mcrypt' '--enable-ftp' '--with-gd' '--enable-gd-native-ttf' '--with-openssl' '--with-mhash' '--enable-pcntl' '--enable-sockets' '--with-xmlrpc' '--enable-zip' '--enable-soap' '--with-gettext' '--enable-sysvshm' '--with-pdo-pgsql=' '--enable-sysvmsg' '--enable-intl'
+    './configure'  "--prefix=${InstallPath}" "--with-config-file-path=${InstallPath}/etc" '--enable-fpm' '--with-fpm-user=ec2-user' '--with-fpm-group=ec2-user' '--with-mysql=mysqlnd' '--with-mysqli=mysqlnd' '--with-pdo-mysql=mysqlnd' '--with-iconv-dir' '--with-freetype-dir' '--with-jpeg-dir' '--with-png-dir' '--with-zlib' '--with-libxml-dir' '--enable-xml' '--disable-rpath' '--enable-bcmath' '--enable-shmop' '--enable-sysvsem' '--enable-inline-optimization' '--with-curl' '--enable-mbregex' '--enable-mbstring' '--with-mcrypt' '--enable-ftp' '--with-gd' '--enable-gd-native-ttf' '--with-openssl' '--with-mhash' '--enable-pcntl' '--enable-sockets' '--with-xmlrpc' '--enable-zip' '--enable-soap' '--with-gettext' '--enable-sysvshm' '--with-pdo-pgsql' '--enable-sysvmsg' '--with-bz2' '--with-pgsql' '--with-gmp'
+
     make -j${cpu_num}
     make install
     cd ${curr_path}
@@ -315,36 +317,39 @@ function php56_install(){
     #下载php-fpm.conf及php.ini
     wget -q -P ${InstallPath}/etc/ ${ConfUrl}/php-fpm.conf.tpl ${ConfUrl}/php5.6.ini.tpl
     #修改php-fpm运行用户
-    sed -i "s/@USER@/$user/g" ${InstallPath}/etc/php-fpm.conf.tpl
-    sed -i "s#/application/php/#${InstallPath}/#" ${InstallPath}/etc/php-fpm.conf.tpl
+    sed -i "s/@USER@/${user}/g" ${InstallPath}/etc/php-fpm.conf.tpl
+    php_child_num=$((${RAM2}*2/15))
+    sed -i "s/@CHILD@/$php_child_num/g" ${InstallPath}/etc/php-fpm.conf.tpl
     #修改php扩展路径
     sed -i "/^extension_dir/cextension_dir='${InstallPath}/lib/php/extensions/no-debug-non-zts-20131226/'" ${InstallPath}/etc/php5.6.ini.tpl
     #改名
     mv ${InstallPath}/etc/php-fpm.conf.tpl ${InstallPath}/etc/php-fpm.conf
     mv ${InstallPath}/etc/php5.6.ini.tpl ${InstallPath}/etc/php.ini
     #使用pecl安装memcached，igbinary,redis扩展
-    ${InstallPath}/bin/pecl  install  igbinary redis memcached
-    #将redis.so加入php.ini（默认文件中有memcached和igbinary）
-    echo 'extension = redis.so' >> ${InstallPath}/etc/php.ini
+    ${InstallPath}/bin/pecl install igbinary
+    echo | ${InstallPath}/bin/pecl install memcached
+    echo | ${InstallPath}/bin/pecl install memcache
     #安装composer
     ${InstallPath}/bin/php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-    ${InstallPath}/bin/php -r "if (hash_file('SHA384', 'composer-setup.php') === '92102166af5abdb03f49ce52a40591073a7b859a86e8ff13338cf7db58a19f7844fbc0bb79b2773bf30791e935dbd938') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-    ${InstallPath}/bin/php composer-setup.php --install-dir=${InstallPath}/bin --filename=composer
-    ${InstallPath}/bin/php -r "unlink('composer-setup.php');"
-    #判断当前路径及/etc/init.d/有没有php-fpm5.6的文件，下载php启动文件到/etc/init.d/
-    wget -q -P /etc/init.d/ ${ConfUrl}/php-fpm
-    sed -i "s#/application/php#${InstallPath}#" /etc/init.d/php-fpm
-    chmod +x /etc/init.d/php-fpm
-    mkdir -p /data/logs/
-    chmod 777 /data/logs
+    ${InstallPath}/bin/php 'composer-setup.php' --install-dir=${InstallPath}/bin/ --filename=composer
+    ${InstallPath}/bin/php -r "unlink('composer-setup.php');" 2&1 > /dev/null
 
+    ln -s ${InstallPath}/bin/composer /usr/local/bin/
+    ln -s ${InstallPath} /usr/local/
     ln -s ${InstallPath}/bin/php /usr/local/bin/
     ln -s ${InstallPath}/bin/phpize /usr/local/bin/
     ln -s ${InstallPath}/bin/php-config /usr/local/bin/
     ln -s ${InstallPath}/bin/pecl /usr/local/bin/
     ln -s ${InstallPath}/bin/composer /usr/local/bin/
 
+    #判断当前路径及/etc/init.d/有没有php-fpm5.6的文件，下载php启动文件到/etc/init.d/
+    wget -q -P /etc/init.d/ ${ConfUrl}/php-fpm
+    chmod +x /etc/init.d/php-fpm
+    mkdir -p /data/logs/
+    chmod 777 /data/logs
+
     /etc/init.d/php-fpm start
+    chkconfig php-fpm on
 }
 
 function zabbix_agent_install() {
@@ -358,7 +363,7 @@ function zabbix_agent_install() {
         sed -i -e "/^Server=/cServer=s.zabbix.brotlab.net,p1.zabbix.brotlab.net" -e "/^ServerActive=/cServerActive=s.zabbix.brotlab.net,p1.zabbix.brotlab.net" -e "/^Hostname=/cHostname=`hostname`" /etc/zabbix/zabbix_agentd.conf
         mkdir -p /etc/zabbix/scripts/
         rm -f /etc/zabbix/zabbix_agentd.d/userparameter_mysql.conf
-        rpm -qa |grep wget &>/dev/null || yum install wget -y    
+        rpm -qa |grep wget &>/dev/null || yum install wget -y
         ls /etc/zabbix/scripts/monitor_mysql &>/dev/null && mv /etc/zabbix/scripts/monitor_mysql  /tmp/monitor_mysql.bak
         wget -q -P /etc/zabbix/scripts/ http://d1aegnnxokxfi0.cloudfront.net/zabbix/config/monitor_mysql
         chmod +x /etc/zabbix/scripts/monitor_mysql
@@ -380,19 +385,14 @@ echo "9)安装iptables"
 
 read -p "输入数字选择安装过程(q键退出): " SET
 
-case $SET in 
+case $SET in
     1)
         php_ver_choose
         basic_parse_optimize
         init_yum_install
-        nginx_install
+        nginx_bulid
         mysql_install
-        
-        if [[ "$php_num" == "5.6" ]] || [[ "$php_num" == "" ]];then
-            php56_install
-        else
-            php_install
-        fi
+        php_install
 
         if [[ $if_lan == [yY] ]] || [[ $if_lan == yes ]] || [[ $if_lan == YES ]]; then
             exit 0
@@ -401,7 +401,7 @@ case $SET in
             iptables_install
         fi
     ;;
-    
+
     2)
     basic_parse_optimize
     ;;
@@ -412,7 +412,7 @@ case $SET in
 
     4)
     init_yum_install
-    nginx_install
+    nginx_bulid
     ;;
 
     5)
@@ -444,6 +444,7 @@ case $SET in
 
     *)
     请输入正确序号
-    sh $0 
+    sh $0
     ;;
 esac
+

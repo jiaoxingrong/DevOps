@@ -91,3 +91,6 @@ ENV/
 .ropeproject
 
 *.csv
+.vscode/*
+.idea/*
+**/.idea/*

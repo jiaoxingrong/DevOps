@@ -11,19 +11,24 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','zip'])
 app.config['UPLOAD_FOLDER'] = SAVE_DIR
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
 @app.route('/',methods=['GET','POST'])
 def ug_crash():
     if request.method == 'POST':
         TIME_DIR = os.path.join(SAVE_DIR,time.strftime('%Y'),time.strftime('%m'),time.strftime('%d'))
         f = request.files['file']
-        fname = secure_filename(f.filename)
-        if not os.path.exists(TIME_DIR):
-            try:
-                os.makedirs(TIME_DIR)
-            except IOError:
-                pass
-        f.save(os.path.join(TIME_DIR,fname))
-        return 'ok'
+        if f and allowed_file(f.filename):
+            fname = secure_filename(f.filename)
+            if not os.path.exists(TIME_DIR):
+                try:
+                    os.makedirs(TIME_DIR)
+                except IOError:
+                    pass
+            f.save(os.path.join(TIME_DIR,fname))
+            return 'ok'
     return '''
     <!doctype html>
     <title>Upload new File</title>
