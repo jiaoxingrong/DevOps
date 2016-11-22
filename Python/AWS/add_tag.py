@@ -3,7 +3,7 @@
 
 import boto3
 
-def add_tag(region,ins_id):
+def ec2_add_tag(region,ins_id,pro):
         session = boto3.session.Session(
             region_name = region
         )
@@ -15,12 +15,34 @@ def add_tag(region,ins_id):
                 Tags=[
                     {
                         'Key': 'Project',
-                        'Value': 'google-pay'
+                        'Value': pro
                     },
                 ]
             )
-        except:
             print response
-inss = ['i-b28130aa','i-9a91f582']
-# for ins in inss:
-add_tag('us-east-1',inss)
+
+        except:
+            pass
+
+def elb_add_tag(region,elb_name,pro):
+    session = boto3.session.Session(
+        region_name = region
+    )
+    elb = session.client('elb')
+
+    response = elb.add_tags(
+        LoadBalancerNames = [elb_name],
+        Tags=[
+            {
+                'Key': 'Project',
+                'Value': pro
+            },
+        ]
+    )
+    print response
+
+inss = ['oas-cluster5-6', 'test-ELB', ]
+odp = ['ODP-http-ELB','ODP-ELB','elb-oas-odp-tmp','elb-oas-odp3-web']
+# pass = []
+# for ins in odp:
+elb_add_tag('us-east-1','test-ELB','ops-dev')
