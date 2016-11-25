@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>InvalidCloudFront</title>
+    <link rel="stylesheet" href="static/bootstrap.min.css">
+    <link rel="stylesheet" href="static/bootstrap-theme.min.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        body{background: aliceblue}
+        .main{
+            background: azure;
+            margin-top: 50px;
+            border: solid 2px #bce8f1;
+            padding: 60px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6 main">
+                <form class="form-horizontal" role="form">
+                  <div class="form-group">
+                    <label for="inputDomain" class="col-sm-2 control-label">域名</label>
+                    <div class="col-sm-10" id="divDomain">
+                      <input type="text" class="form-control" id="inputDomain" placeholder="www.oasgames.com" name="domain">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="inputUrls" class="col-sm-2 control-label">URLS</label>
+                    <div class="col-sm-10">
+                        <textarea class="form-control" id="inputUrls" rows="8"></textarea>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="inputToken" class="col-sm-2 control-label">Token</label>
+                    <div class="col-sm-10" id="divToken">
+                      <input type="password" class="form-control" id="inputToken" placeholder="输入提供的Token" name="Token">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                      <button type="button" class="btn btn-default" id="sub">
+                           <span class="glyphicon glyphicon-refresh"></span> 刷新
+                      </button>
+                    </div>
+                  </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script>
+        var placeholder = 'img/img1.jpg\n/img/img1.jpg\n/img/*\nimg/img*\n\n输入 * 刷新所有';
+        $('textarea').val(placeholder);
+        $('textarea').focus(function() {
+            if ($(this).val() == placeholder) {
+                $(this).val('');
+            }
+        });
+
+        $('textarea').blur(function() {
+            if ($(this).val() == '') {
+                $(this).val(placeholder);
+            }
+        });
+
+        function submit() {
+            $('#sub').html('<span class="glyphicon glyphicon-refresh"></span>刷新中')
+            if (! $('#inputDomain').val()) {
+                alert('请输入域名')
+                return
+            }
+
+            if (! $('#inputToken').val()){
+                alert('请输入Token')
+                return
+            }
+
+            if ($('#inputUrls').val() == placeholder){
+                alert('请输入要刷新的url')
+                return
+            }
+
+
+            urls = $('#inputUrls').val()
+
+            urls2 = urls.replace(/\n/g,'@@@')
+            var options = 'domain=' +  $('#inputDomain').val() + '&token=' + $('#inputToken').val() + '&urls=' + urls2
+            $.ajax({
+                url: '/api?' + options,
+                success: function (result) {
+                    $('#sub').html('<span class="glyphicon glyphicon-refresh"></span>刷新')
+                    alert(result)
+                }
+            })
+        }
+
+        $('#sub').click(submit)
+    </script>
+</body>
+</html>
