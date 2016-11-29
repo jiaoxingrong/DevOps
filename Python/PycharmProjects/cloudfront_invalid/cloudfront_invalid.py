@@ -62,6 +62,8 @@ def cloudfront():
 def api():
     domain = request.args.get('domain')
     urls = request.args.get('urls')
+    if urls == '*':
+        urls = '/*'
     urls_list = urls.split('@@@')
     token = request.args.get('token')
     
