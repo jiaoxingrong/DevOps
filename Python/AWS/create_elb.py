@@ -99,7 +99,7 @@ def create_route53_record(domain,record,action):
     )
     print response
 
-update_domain = ['maoven.oasgames.com', 'mcobde.oasgames.com', 'mcoben.oasgames.com', 'mcobfr.oasgames.com', 'mcobru.oasgames.com', 'mcobtr.oasgames.com', 'mnblen.oasgames.com', 'mnblpt.oasgames.com', 'moode.oasgames.com', 'mooen.oasgames.com', 'mooru.oasgames.com', 'moo.oasgames.com', 'mtstrike.oasgames.com', 'mtstrikeen.oasgames.com', 'mtstrikeru.oasgames.com', 'mtstriketr.oasgames.com', 'mtstrikede.oasgames.com']
+update_domain = ['msb.oasgames.com','msben.oasgames.com','msbtw.oasgames.com']
 
 for domain in update_domain:
     create_route53_record(domain,'d2cxfaeos9jwqa.cloudfront.net','UPSERT')

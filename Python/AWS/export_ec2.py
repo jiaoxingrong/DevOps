@@ -11,6 +11,8 @@ from sqlalchemy import create_engine, Table, Column, MetaData, select, INTEGER, 
 reload(sys)
 sys.setdefaultencoding('GBK')
 
+region_contrast = {'ap-northeast-2': 'Asia Pacific (Seoul)', 'ap-south-1': 'Asia Pacific (Mumbai)', 'sa-east-1': 'South America (Sao Paulo)', 'eu-west-1': 'EU (Ireland)', 'eu-central-1': 'EU (Frankfurt)', 'ap-southeast-1': 'Asia Pacific (Singapore)', 'ap-southeast-2': 'Asia Pacific (Sydney)', 'us-west-1': 'US West (N. California)', 'ap-northeast-1': 'Asia Pacific (Tokyo)', 'us-west-2': 'US West (Oregon)', 'us-east-1': 'US East (N. Virginia)', 'us-east-2': 'US East (Ohio)'}
+
 def cal_run_hours(cal_date,compare_date=datetime.datetime.utcnow().strftime('%Y%m')):
     compare_date = str(compare_date)
     compare_date_year = int(compare_date[:4])
@@ -62,6 +64,7 @@ def GetEC2(region,report_filename,compare_date=0):
     #access_key = os.environ.get('AWS_ACCESS_KEY')
     #secret_key = os.environ.get('AWS_SECRET_KEY')
 
+    region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
@@ -112,60 +115,18 @@ def GetEC2(region,report_filename,compare_date=0):
                         inst_platform = 'Linux'
                     single_price = get_ec2_price(region,instance_type,inst_platform)
                     month_price = instance_run_hours * single_price
-                    write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('EC2',instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region)
+                    write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('EC2',instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region_name)
                     f.write(write_result)
                 except:
                     print instance
     f.close()
 
-
-def GetELB(region,report_filename,compare_date=0):
-
+def GetELB(region,report_filename):
+    region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
     session = boto3.session.Session(
-        #aws_access_key_id=access_key,
-        #aws_secret_access_key=secret_key,
-        region_name=region
-    )
-    client = session.client('elb')
-    api_response = client.get_paginator('describe_load_balancers')
-    if not DBIns:
-        return
-
-    for db in DBIns:
-        db_name = db.get('DBInstanceIdentifier')
-        db_storage = db.get('AllocatedStorage')
-        db_engine = db.get('Engine')
-        db_ins_type = db.get('DBInstanceClass')
-
-        if db.get('MultiAZ'):
-            db_IF_MultiAZ = 'Multi-AZ'
-        else:
-            db_IF_MultiAZ = 'Single-AZ'
-
-        if compare_date:
-            db_run_hours = cal_run_hours(db.get('InstanceCreateTime'),compare_date)
-        else:
-            db_run_hours = cal_run_hours(db.get('InstanceCreateTime'))
-
-        single_price = get_rds_price(region, db_ins_type, db_engine, db_IF_MultiAZ)
-        if not single_price:
-            print region, db_ins_type, db_engine, db_IF_MultiAZ
-        db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('RDS',db_name, db_ins_type, db_run_hours, db_month_price, db_storage, region)
-        f.write(write_result)
-    f.close()
-
-def GetELB2(region,compare_date=0):
-
-    # f = file(report_filename,'a')
-    # f.seek(0,2)
-
-    session = boto3.session.Session(
-        #aws_access_key_id=access_key,
-        #aws_secret_access_key=secret_key,
         region_name=region
     )
     client = session.client('elb')
@@ -176,9 +137,20 @@ def GetELB2(region,compare_date=0):
         items = page.get('LoadBalancerDescriptions')
         for elb in items:
             elb_name = elb.get('LoadBalancerName')
-            elb_names.append(elb_name)
+            get_elb_tag = client.describe_tags(
+                    LoadBalancerNames=[elb_name]
+                )
+            for tag in get_elb_tag.get('TagDescriptions')[0].get('Tags'):
+                if tag.get('Key') == 'Project':
+                    elb_project = tag.get('Value')
+            try:
+                elb_project
+            except Exception, e:
+                elb_project = Null
 
-    print region,elb_names
+            write_result = '%s,%s,%s\n' % ('ELB',elb_project, elb_name, region_name)
+            f.write(write_result)
+    f.close()
 
 def get_rds_price(region,instance_type,db_engine,deploymentOption):
     engine = create_engine('mysql://root:123456@localhost:3006/aws_price',encoding='utf-8')
@@ -205,7 +177,7 @@ def get_rds_price(region,instance_type,db_engine,deploymentOption):
     if res:
         return res[0][0]
 def GetRDS(region,report_filename,compare_date=0):
-
+    region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
@@ -240,7 +212,7 @@ def GetRDS(region,report_filename,compare_date=0):
         if not single_price:
             print region, db_ins_type, db_engine, db_IF_MultiAZ
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('RDS',db_name, db_ins_type, db_run_hours, db_month_price, db_storage, region)
+        write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('RDS',db_name, db_ins_type, db_run_hours, db_month_price, db_storage, region_name)
         f.write(write_result)
     f.close()
 
@@ -266,6 +238,7 @@ def get_redshift_price(region,instance_type):
     if res:
         return res[0][0]
 def GetRedshift(region,report_filename,compare_date=0):
+    region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
@@ -292,7 +265,7 @@ def GetRedshift(region,report_filename,compare_date=0):
 
         single_price = get_redshift_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%s\n' % ('Redshift',db_name, db_ins_type, db_run_hours, db_month_price, region)
+        write_result = '%s,%s,%s,%d,%.2f,%s\n' % ('Redshift',db_name, db_ins_type, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
@@ -318,6 +291,7 @@ def get_elasticache_price(region,instance_type):
     if res:
         return res[0][0]
 def GetElasticache(region,report_filename,compare_date=0):
+    region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
@@ -344,7 +318,7 @@ def GetElasticache(region,report_filename,compare_date=0):
 
         single_price = get_elasticache_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%s\n' % ('Elasticache',db_name, db_ins_type, db_run_hours, db_month_price, region)
+        write_result = '%s,%s,%s,%d,%.2f,%s\n' % ('Elasticache',db_name, db_ins_type, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
@@ -355,16 +329,11 @@ def main():
     report_filename = '/Users/Jerome/Desktop/export_aws_'+today+'.csv'
 
     for region in Regions:
-        # GetEC2(region,report_filename)
+        GetEC2(region,report_filename)
+        GetELB(region,report_filename)
         GetRDS(region,report_filename)
         GetRedshift(region,report_filename)
         GetElasticache(region,report_filename)
 
-def main2():
-    Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
-
-    for region in Regions:
-        GetELB2(region)
-
 if __name__ == '__main__':
-    main()
+    main2()
