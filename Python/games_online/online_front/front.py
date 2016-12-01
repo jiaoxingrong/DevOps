@@ -17,13 +17,13 @@ class GetTriggers(online):
         for res in r.fetchall():
             tri_text = '%s-%s-S%s 在线人数报警' % (res[1], res[3], res[4])
             tris_dict.get('online').append(tri_text)
-        
-        zbx = ZabbixTools('http://s.zabbix.brotlab.net/zabbix', 'admin', 'cYU25jjQzFmQmZqv')
+
+        zbx = ZabbixTools()
         zbx_tris = zbx.trigger_get()
         tris_dict['zabbix'] = zbx_tris
-        
+
         res = json.dumps(tris_dict)
-        conn.close() 
+        conn.close()
         return res
 
 
