@@ -39,7 +39,7 @@ def cal_run_hours(cal_date,compare_date=datetime.datetime.utcnow().strftime('%Y%
     return run_hours
 
 def get_ec2_price(region,instance_type,platform):
-    engine = create_engine('mysql://root:123456@localhost:3006/aws_price',encoding='utf-8')
+    engine = create_engine('mysql+mysqlconnector://root:123456@localhost:3306/aws_price',encoding='utf-8')
     metadata = MetaData()
     ec2_price = Table('ec2',metadata,
         Column('id',INTEGER,primary_key=True),
@@ -157,7 +157,7 @@ def GetELB(region,report_filename):
     f.close()
 
 def get_rds_price(region,instance_type,db_engine,deploymentOption):
-    engine = create_engine('mysql://root:123456@localhost:3006/aws_price',encoding='utf-8')
+    engine = create_engine('mysql+mysqlconnector://root:123456@localhost:3306/aws_price',encoding='utf-8')
     metadata = MetaData()
     rds_price = Table('rds',metadata,
         Column('id',INTEGER,primary_key=True),
@@ -231,7 +231,7 @@ def GetRDS(region,report_filename,compare_date=0):
 
 
 def get_redshift_price(region,instance_type):
-    engine = create_engine('mysql://root:123456@localhost:3006/aws_price',encoding='utf-8')
+    engine = create_engine('mysql+mysqlconnector://root:123456@localhost:3306/aws_price',encoding='utf-8')
     metadata = MetaData()
     ec2_price = Table('redshift',metadata,
         Column('id',INTEGER,primary_key=True),
@@ -295,7 +295,7 @@ def GetRedshift(region,report_filename,compare_date=0):
 
 
 def get_elasticache_price(region,instance_type):
-    engine = create_engine('mysql://root:123456@localhost:3006/aws_price',encoding='utf-8')
+    engine = create_engine('mysql+mysqlconnector://root:123456@localhost:3306/aws_price',encoding='utf-8')
     metadata = MetaData()
     elasticache_price = Table('elasticache',metadata,
         Column('id',INTEGER,primary_key=True),
