@@ -91,12 +91,15 @@ def GetEC2(region,report_filename,compare_date=0):
         for instance in instances:
             if instance.state['Name'] == 'running':
                 for tag in instance.tags:
-                    if tag['Key'] == 'Name':
+                    if tag.get('Key') == 'Name':
                         instance_name = tag['Value']
+
+                    if tag.get('Key') == 'Project':
+                        instance_project = tag.get('Value')
                 try:
                     instance_volume_size = 0
-                    instance_pri_ip =  instance.private_ip_address
-                    instance_ip = instance.classic_address.public_ip
+                    # # instance_pri_ip =  instance.private_ip_address
+                    # instance_ip = instance.classic_address.public_ip
                     instance_type = instance.instance_type
 
                     if compare_date:
@@ -115,10 +118,11 @@ def GetEC2(region,report_filename,compare_date=0):
                         inst_platform = 'Linux'
                     single_price = get_ec2_price(region,instance_type,inst_platform)
                     month_price = instance_run_hours * single_price
-                    write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('EC2',instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region_name)
+                    write_result = '%s,%s,%s,%s,%d,%.2f,%d,%s\n' % ('EC2',
+                        instance_project, instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region_name)
                     f.write(write_result)
-                except:
-                    print instance
+                except Exception,e:
+                    print Exception,":", e
     f.close()
 
 def GetELB(region,report_filename):
@@ -148,7 +152,7 @@ def GetELB(region,report_filename):
             except Exception, e:
                 elb_project = Null
 
-            write_result = '%s,%s,%s\n' % ('ELB',elb_project, elb_name, region_name)
+            write_result = '%s,%s,%s,%s\n' % ('ELB',elb_project, elb_name, region_name)
             f.write(write_result)
     f.close()
 
@@ -182,8 +186,6 @@ def GetRDS(region,report_filename,compare_date=0):
     f.seek(0,2)
 
     session = boto3.session.Session(
-        #aws_access_key_id=access_key,
-        #aws_secret_access_key=secret_key,
         region_name=region
     )
     client = session.client('rds')
@@ -197,6 +199,17 @@ def GetRDS(region,report_filename,compare_date=0):
         db_storage = db.get('AllocatedStorage')
         db_engine = db.get('Engine')
         db_ins_type = db.get('DBInstanceClass')
+        db_arn = 'arn:aws:rds:' + region + ':027999362592' + ':db' + ':' + db_name
+
+        db_tags = client.list_tags_for_resource(ResourceName=db_arn)
+        for tag in db_tags.get('TagList'):
+            if tag.get('Key') == 'Project':
+                db_project = tag.get('Value')
+
+        try:
+            db_project
+        except Exception, e:
+            db_project = 'Null'
 
         if db.get('MultiAZ'):
             db_IF_MultiAZ = 'Multi-AZ'
@@ -212,7 +225,7 @@ def GetRDS(region,report_filename,compare_date=0):
         if not single_price:
             print region, db_ins_type, db_engine, db_IF_MultiAZ
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%d,%s\n' % ('RDS',db_name, db_ins_type, db_run_hours, db_month_price, db_storage, region_name)
+        write_result = '%s,%s,%s,%s,%d,%.2f,%d,%s\n' % ('RDS',db_project, db_name, db_ins_type, db_run_hours, db_month_price, db_storage, region_name)
         f.write(write_result)
     f.close()
 
@@ -243,8 +256,6 @@ def GetRedshift(region,report_filename,compare_date=0):
     f.seek(0,2)
 
     session = boto3.session.Session(
-        #aws_access_key_id=access_key,
-        #aws_secret_access_key=secret_key,
         region_name=region
     )
     client = session.client('redshift')
@@ -257,6 +268,19 @@ def GetRedshift(region,report_filename,compare_date=0):
     for db in Clusters:
         db_name = db.get('ClusterIdentifier')
         db_ins_type = db.get('NodeType')
+        db_arn = 'arn:aws:redshift:' + region + ':027999362592:cluster:' + db_name
+        db_tags = client.describe_tags(
+                ResourceName=db_arn,
+                TagKeys=['Project']
+            )
+
+        for tag in db_tags.get('TaggedResources'):
+            if tag.get('Tag').get('Key') == 'Project':
+                db_project = tag.get('Tag').get('Value')
+        try:
+            db_project
+        except Exception, e:
+            db_project = 'Null'
 
         if compare_date:
             db_run_hours = cal_run_hours(db.get('ClusterCreateTime'),compare_date)
@@ -265,7 +289,7 @@ def GetRedshift(region,report_filename,compare_date=0):
 
         single_price = get_redshift_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%s\n' % ('Redshift',db_name, db_ins_type, db_run_hours, db_month_price, region_name)
+        write_result = '%s,%s,%s,%s,%d,%.2f,%s\n' % ('Redshift',db_project, db_name, db_ins_type, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
@@ -296,8 +320,6 @@ def GetElasticache(region,report_filename,compare_date=0):
     f.seek(0,2)
 
     session = boto3.session.Session(
-        #aws_access_key_id=access_key,
-        #aws_secret_access_key=secret_key,
         region_name=region
     )
     client = session.client('elasticache')
@@ -311,6 +333,18 @@ def GetElasticache(region,report_filename,compare_date=0):
         db_name = db.get('CacheClusterId')
         db_ins_type = db.get('CacheNodeType')
 
+        db_arn = 'arn:aws:elasticache:' + region + ':027999362592:cluster:' + db_name
+        db_tags = client.list_tags_for_resource(ResourceName=db_arn)
+        for tag in db_tags.get('TagList'):
+            if tag.get('Key') == 'Project':
+                db_project = tag.get('Value')
+
+        print db_project
+        try:
+            db_project
+        except Exception, e:
+            db_project = 'Null'
+
         if compare_date:
             db_run_hours = cal_run_hours(db.get('CacheClusterCreateTime'),compare_date)
         else:
@@ -318,7 +352,7 @@ def GetElasticache(region,report_filename,compare_date=0):
 
         single_price = get_elasticache_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%d,%.2f,%s\n' % ('Elasticache',db_name, db_ins_type, db_run_hours, db_month_price, region_name)
+        write_result = '%s,%s,%s,%s,%d,%.2f,%s\n' % ('Elasticache',db_project, db_name, db_ins_type, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
