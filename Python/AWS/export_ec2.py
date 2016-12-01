@@ -336,4 +336,4 @@ def main():
         GetElasticache(region,report_filename)
 
 if __name__ == '__main__':
-    main2()
+    main()
