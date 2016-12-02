@@ -326,7 +326,6 @@ function php_bulid() {
     mv ${InstallPath}/etc/php-fpm.conf.tpl ${InstallPath}/etc/php-fpm.conf
     mv ${InstallPath}/etc/php5.6.ini.tpl ${InstallPath}/etc/php.ini
     #使用pecl安装memcached，igbinary,redis扩展
-    ${InstallPath}/bin/pecl install igbinary
     echo | ${InstallPath}/bin/pecl install memcached
     echo | ${InstallPath}/bin/pecl install memcache
     #安装composer

@@ -339,7 +339,6 @@ def GetElasticache(region,report_filename,compare_date=0):
             if tag.get('Key') == 'Project':
                 db_project = tag.get('Value')
 
-        print db_project
         try:
             db_project
         except Exception, e:
