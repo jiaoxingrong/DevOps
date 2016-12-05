@@ -99,6 +99,20 @@ def create_route53_record(domain,record,action):
     )
     print response
 
+def crt_queue(region,QName):
+    session = boto3.session.Session(
+        region_name = region
+    )
+    sqs = session.client('sqs')
+    res = sqs.create_queue(
+            QueueName=QName,
+            Attributes={
+                'VisibilityTimeout': '7200',
+                'MessageRetentionPeriod': '1209600'
+            }
+        )
+    print res
+
 update_domain = ['msb.oasgames.com','msben.oasgames.com','msbtw.oasgames.com']
 
 for domain in update_domain:
