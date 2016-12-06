@@ -363,15 +363,18 @@ def main(account):
     Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 
-    report_filename = 'export_aws_'+today+'.csv'
+    ec2_filename = 'export-ec2-'+today+'.csv'
+    rds_filename = 'export-rds-'+today+'.csv'
+    redshift_filename = 'export-redshift-'+today+'.csv'
+    elasticache_filename = 'export-elasticache-'+today+'.csv'
     account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
     for region in Regions:
-        GetEC2(account,account_id.get(account),region,report_filename)
-        GetELB(account,account_id.get(account), region,report_filename)
-        GetRDS(account,account_id.get(account), region,report_filename)
-        GetRedshift(account,account_id.get(account), region,report_filename)
-        GetElasticache(account,account_id.get(account), region,report_filename)
+        GetEC2(account, region, ec2_filename)
+        GetELB(account, region, ec2_filename)
+        GetRDS(account, account_id.get(account), region,rds_filename)
+        GetRedshift(account, account_id.get(account), region,redshift_filename)
+        GetElasticache(account, account_id.get(account), region,elasticache_filename)
 
 if __name__ == '__main__':
     main('mdata')

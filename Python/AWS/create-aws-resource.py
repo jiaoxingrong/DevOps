@@ -113,7 +113,7 @@ def crt_queue(region,QName):
         )
     print res
 
-update_domain = ['msb.oasgames.com','msben.oasgames.com','msbtw.oasgames.com']
+update_domain = ['api.mobile.oasgames.com', 'apisdk-mini.mobile.oasgames.com', 'mob.oasgames.com', 'mobile.oasgames.com', 'mpay.oasgames.com', 'm.oasgames.com']
 
 for domain in update_domain:
     create_route53_record(domain,'d2cxfaeos9jwqa.cloudfront.net','UPSERT')
