@@ -364,7 +364,7 @@ def main():
     Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 
-    report_filename = '/Users/Jerome/Desktop/export_aws_'+today+'.csv'
+    report_filename = 'export_aws_'+today+'.csv'
 
     for region in Regions:
         GetEC2('mdata',region,report_filename)
