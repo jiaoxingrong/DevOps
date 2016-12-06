@@ -65,7 +65,7 @@ class Route53():
         f = file(self.export_filename,'wa')
         for record_set in domain_record_list:
             for record in record_set:
-                if record['Type'] in self.export_record_type:
+                if record['Type'] in self.export_record_type and record['ResourceRecords']:
                     record_value = ''
                     for value in record['ResourceRecords']:
                         record_value += value['Value'] + ','

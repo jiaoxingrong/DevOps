@@ -60,7 +60,7 @@ def get_ec2_price(region,instance_type,platform):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetEC2(region,report_filename,compare_date=0):
+def GetEC2(profile,region,report_filename,compare_date=0):
     #access_key = os.environ.get('AWS_ACCESS_KEY')
     #secret_key = os.environ.get('AWS_SECRET_KEY')
 
@@ -68,7 +68,8 @@ def GetEC2(region,report_filename,compare_date=0):
     f = file(report_filename,'a')
     f.seek(0,2)
 
-    session = boto3.session.Session(
+    session = boto3.Session(
+        profile_name=profile,
         #aws_access_key_id=access_key,
         #aws_secret_access_key=secret_key,
         region_name=region
@@ -125,12 +126,13 @@ def GetEC2(region,report_filename,compare_date=0):
                     print Exception,":", e
     f.close()
 
-def GetELB(region,report_filename):
+def GetELB(profile,region,report_filename):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
-    session = boto3.session.Session(
+    session = boto3.Session(
+        profile_name=profile,
         region_name=region
     )
     client = session.client('elb')
@@ -180,12 +182,13 @@ def get_rds_price(region,instance_type,db_engine,deploymentOption):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetRDS(region,report_filename,compare_date=0):
+def GetRDS(profile,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
-    session = boto3.session.Session(
+    session = boto3.Session(
+        profile_name=profile,
         region_name=region
     )
     client = session.client('rds')
@@ -250,12 +253,13 @@ def get_redshift_price(region,instance_type):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetRedshift(region,report_filename,compare_date=0):
+def GetRedshift(profile,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
-    session = boto3.session.Session(
+    session = boto3.Session(
+        profile_name=profile,
         region_name=region
     )
     client = session.client('redshift')
@@ -314,12 +318,13 @@ def get_elasticache_price(region,instance_type):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetElasticache(region,report_filename,compare_date=0):
+def GetElasticache(profile,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
 
-    session = boto3.session.Session(
+    session = boto3.Session(
+        profile_name=profile,
         region_name=region
     )
     client = session.client('elasticache')
@@ -362,11 +367,11 @@ def main():
     report_filename = '/Users/Jerome/Desktop/export_aws_'+today+'.csv'
 
     for region in Regions:
-        GetEC2(region,report_filename)
-        GetELB(region,report_filename)
-        GetRDS(region,report_filename)
-        GetRedshift(region,report_filename)
-        GetElasticache(region,report_filename)
+        GetEC2('mdata',region,report_filename)
+        GetELB('mdata',region,report_filename)
+        GetRDS('mdata',region,report_filename)
+        GetRedshift('mdata',region,report_filename)
+        GetElasticache('mdata',region,report_filename)
 
 if __name__ == '__main__':
     main()
