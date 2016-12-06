@@ -125,7 +125,6 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                 except Exception,e:
                     print Exception, ":", e, instance_name
     f.close()
-
 def GetELB(profile,region,report_filename):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
@@ -182,7 +181,7 @@ def get_rds_price(region,instance_type,db_engine,deploymentOption):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetRDS(profile,region,report_filename,compare_date=0):
+def GetRDS(profile,account,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -202,7 +201,7 @@ def GetRDS(profile,region,report_filename,compare_date=0):
         db_storage = db.get('AllocatedStorage')
         db_engine = db.get('Engine')
         db_ins_type = db.get('DBInstanceClass')
-        db_arn = 'arn:aws:rds:' + region + ':027999362592' + ':db' + ':' + db_name
+        db_arn = 'arn:aws:rds:' + region + ':' + account + ':db' + ':' + db_name
 
         db_tags = client.list_tags_for_resource(ResourceName=db_arn)
         for tag in db_tags.get('TagList'):
@@ -253,7 +252,7 @@ def get_redshift_price(region,instance_type):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetRedshift(profile,region,report_filename,compare_date=0):
+def GetRedshift(profile, account, region, report_filename, compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -272,7 +271,7 @@ def GetRedshift(profile,region,report_filename,compare_date=0):
     for db in Clusters:
         db_name = db.get('ClusterIdentifier')
         db_ins_type = db.get('NodeType')
-        db_arn = 'arn:aws:redshift:' + region + ':027999362592:cluster:' + db_name
+        db_arn = 'arn:aws:redshift:' + region + ':' + account + ':cluster:' + db_name
         db_tags = client.describe_tags(
                 ResourceName=db_arn,
                 TagKeys=['Project']
@@ -318,7 +317,7 @@ def get_elasticache_price(region,instance_type):
     res = r.fetchall()
     if res:
         return res[0][0]
-def GetElasticache(profile,region,report_filename,compare_date=0):
+def GetElasticache(profile,account,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -338,7 +337,7 @@ def GetElasticache(profile,region,report_filename,compare_date=0):
         db_name = db.get('CacheClusterId')
         db_ins_type = db.get('CacheNodeType')
 
-        db_arn = 'arn:aws:elasticache:' + region + ':027999362592:cluster:' + db_name
+        db_arn = 'arn:aws:elasticache:' + region + ':' + account + ':cluster:' + db_name
         db_tags = client.list_tags_for_resource(ResourceName=db_arn)
         for tag in db_tags.get('TagList'):
             if tag.get('Key') == 'Project':
@@ -360,18 +359,19 @@ def GetElasticache(profile,region,report_filename,compare_date=0):
         f.write(write_result)
     f.close()
 
-def main():
+def main(account):
     Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 
     report_filename = 'export_aws_'+today+'.csv'
+    account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
     for region in Regions:
-        GetEC2('mdata',region,report_filename)
-        GetELB('mdata',region,report_filename)
-        GetRDS('mdata',region,report_filename)
-        GetRedshift('mdata',region,report_filename)
-        GetElasticache('mdata',region,report_filename)
+        GetEC2(account,account_id.get(account),region,report_filename)
+        GetELB(account,account_id.get(account), region,report_filename)
+        GetRDS(account,account_id.get(account), region,report_filename)
+        GetRedshift(account,account_id.get(account), region,report_filename)
+        GetElasticache(account,account_id.get(account), region,report_filename)
 
 if __name__ == '__main__':
-    main()
+    main('mdata')
