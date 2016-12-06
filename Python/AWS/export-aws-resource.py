@@ -123,7 +123,7 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                         instance_project, instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region_name)
                     f.write(write_result)
                 except Exception,e:
-                    print Exception,":", e
+                    print Exception, ":", e, instance_name
     f.close()
 
 def GetELB(profile,region,report_filename):
@@ -152,7 +152,7 @@ def GetELB(profile,region,report_filename):
             try:
                 elb_project
             except Exception, e:
-                elb_project = Null
+                elb_project = 'Null'
 
             write_result = '%s,%s,%s,%s\n' % ('ELB',elb_project, elb_name, region_name)
             f.write(write_result)
