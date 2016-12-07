@@ -387,4 +387,4 @@ def main(account):
         GetElasticache(account, account_id.get(account), region,elasticache_filename)
 
 if __name__ == '__main__':
-    main('platform')
+    main('mdata')
