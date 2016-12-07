@@ -25,7 +25,7 @@ def cal_run_hours(cal_date,compare_date=datetime.datetime.utcnow().strftime('%Y%
     compare_date_month_hours = calendar.monthrange(compare_date_year,compare_date_month)[1] * 24
     compare_date_begin_ts = calendar.timegm(datetime.datetime(compare_date_year,compare_date_month,1).timetuple())
 
-    if compare_date[-2:] == '12':
+    if compare_date_month == '12':
         compare_date_end_ts = calendar.timegm(datetime.datetime(compare_date_year+1,1,1).timetuple())
     else:
         compare_date_end_ts = calendar.timegm(datetime.datetime(compare_date_year,compare_date_month+1,1).timetuple())
