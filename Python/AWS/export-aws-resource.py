@@ -103,6 +103,11 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                     if tag.get('Key') == 'Project':
                         instance_project = tag.get('Value')
                 try:
+                    instance_project
+                except Exception, e:
+                    instance_project = 'Null'
+
+                try:
                     instance_volume_size = 0
                     # # instance_pri_ip =  instance.private_ip_address
                     # instance_ip = instance.classic_address.public_ip
