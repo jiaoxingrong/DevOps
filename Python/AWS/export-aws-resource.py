@@ -15,8 +15,13 @@ region_contrast = {'ap-northeast-2': 'Asia Pacific (Seoul)', 'ap-south-1': 'Asia
 
 def cal_run_hours(cal_date,compare_date=datetime.datetime.utcnow().strftime('%Y%m')):
     compare_date = str(compare_date)
-    compare_date_year = int(compare_date[:4])
-    compare_date_month = int(compare_date[-2:])
+    if int(compare_date[-2:]) == 1:
+        compare_date_year = int(compare_date[:4]) - 1
+        compare_date_month = 12
+    else:
+        compare_date_year = int(compare_date[:4])
+        compare_date_month = int(compare_date[-2:]) - 1
+
     compare_date_month_hours = calendar.monthrange(compare_date_year,compare_date_month)[1] * 24
     compare_date_begin_ts = calendar.timegm(datetime.datetime(compare_date_year,compare_date_month,1).timetuple())
 
@@ -377,4 +382,4 @@ def main(account):
         GetElasticache(account, account_id.get(account), region,elasticache_filename)
 
 if __name__ == '__main__':
-    main('mdata')
+    main('platform')
