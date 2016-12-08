@@ -215,6 +215,7 @@ def GetEC2v2(profile,region,report_filename,compare_date=0):
     f.close()
 
 def GetELB(profile,region,report_filename):
+    result_dict = {}
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -242,8 +243,14 @@ def GetELB(profile,region,report_filename):
             except Exception, e:
                 elb_project = 'Null'
 
-            write_result = '%s,%s,%s,%s\n' % ('ELB',elb_project, elb_name, region_name)
-            f.write(write_result)
+            if result_dict.get(elb_project):
+                result_dict[elb_project] += 1
+            else:
+                result_dict[elb_project] = 1
+
+    for elb in result_dict:
+        write_result = '%s,%s,%d,%s\n' % (elb, 'ELB', result_dict.get(elb), region_name)
+        f.write(write_result)
     f.close()
 
 def get_rds_price(region,instance_type,db_engine,deploymentOption):
@@ -271,6 +278,7 @@ def get_rds_price(region,instance_type,db_engine,deploymentOption):
     if res:
         return res[0][0]
 def GetRDS(profile,account,region,report_filename,compare_date=0):
+    result_dict = {}
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -316,8 +324,34 @@ def GetRDS(profile,account,region,report_filename,compare_date=0):
         if not single_price:
             print region, db_ins_type, db_engine, db_IF_MultiAZ
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%s,%d,%.2f,%d,%s\n' % ('RDS',db_project, db_name, db_ins_type, db_run_hours, db_month_price, db_storage, region_name)
-        f.write(write_result)
+
+        if result_dict.get(db_project):
+            if result_dict.get(db_project).get('rds').get(db_ins_type):
+                result_dict[db_project]['rds'][db_ins_type]['hours'] += db_run_hours
+                result_dict[db_project]['rds'][db_ins_type]['prices'] += db_month_price
+                result_dict[db_project]['rds'][db_ins_type]['num'] += 1
+                result_dict[db_project]['rds-storage'] += db_storage
+            else:
+                result_dict[db_project]['rds'][db_ins_type] = {'hours': 0, 'prices': 0 ,'num': 0}
+                result_dict[db_project]['rds'][db_ins_type]['hours'] += db_run_hours
+                result_dict[db_project]['rds'][db_ins_type]['prices'] += db_month_price
+                result_dict[db_project]['rds'][db_ins_type]['num'] += 1
+                result_dict[db_project]['rds-storage'] += db_storage
+        else:
+            result_dict[db_project] = {'rds':{},'rds-storage':0}
+            result_dict[db_project]['rds'][db_ins_type] = {'hours': 0, 'prices': 0 ,'num': 0}
+            result_dict[db_project]['rds'][db_ins_type]['hours'] += db_run_hours
+            result_dict[db_project]['rds'][db_ins_type]['prices'] += db_month_price
+            result_dict[db_project]['rds'][db_ins_type]['num'] += 1
+            result_dict[db_project]['rds-storage'] += db_storage
+
+    for project in result_dict:
+        for type in result_dict.get(project).get('rds'):
+            db_type_info = result_dict.get(project).get('ec2').get(type)
+            write_result = '%s,%s,%s,%d,%d,%.2f,%s\n' % (project,'RDS', type, db_type_info.get('num'),db_type_info.get('hours'), db_type_info.get('prices'), region_name)
+            f.write(write_result)
+        wrt_ebs_result = '%s,%s,,%d,,,%s\n' % (project,'rds-storage',result_dict.get(project).get('rds-storage'),region_name)
+        f.write(wrt_ebs_result)
     f.close()
 
 
@@ -461,9 +495,9 @@ def main(account):
 
     for region in Regions:
         # GetEC2(account, region, ec2_filename)
-        GetEC2v2(account, region, ec2_filename)
-        # GetELB(account, region, ec2_filename)
-        # GetRDS(account, account_id.get(account), region,rds_filename)
+        # GetEC2v2(account, region, ec2_filename)
+        GetELB(account, region, ec2_filename)
+        GetRDS(account, account_id.get(account), region,rds_filename)
         # GetRedshift(account, account_id.get(account), 'us-east-1',redshift_filename)
         # GetElasticache(account, account_id.get(account), region,elasticache_filename)
 
