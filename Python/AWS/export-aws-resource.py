@@ -186,26 +186,32 @@ def GetEC2v2(profile,region,report_filename,compare_date=0):
                         if result_dict.get(instance_project).get('ec2').get(instance_type):
                             result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
                             result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
+                            result_dict[instance_project]['ec2'][instance_type]['num'] ++
                             result_dict[instance_project]['ebs'] += instance_volume_size
                         else:
-                            result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 }
+                            result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 ,'num': 0}
                             result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
                             result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
+                            result_dict[instance_project]['ec2'][instance_type]['num'] ++
                             result_dict[instance_project]['ebs'] += instance_volume_size
                     else:
                         result_dict[instance_project] = {'ec2':{},'ebs':0}
-                        result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 }
+                        result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 ,'num': 0}
                         result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
                         result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
+                        result_dict[instance_project]['ec2'][instance_type]['num'] ++
                         result_dict[instance_project]['ebs'] += instance_volume_size
 
-                    # write_result = '%s,%s,%s,%s,%d,%.2f,%d,%s\n' % ('EC2',
-                    #     instance_project, instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region_name)
-                    # f.write(write_result)
                 except Exception,e:
                     print Exception, ":", e, instance_name
 
-    print result_dict
+    for project in result_dict:
+        for type in result_dict.get(project).get('ec2'):
+            ins_type_info = result_dict.get(project).get('ec2').get(type)
+            write_result = '%s,%s,%s,%d,%d,%.2f,%s\n' % (project,'EC2', type, ins_type_info.get('num'),ins_type_info.get('hours'), ins_type_info.get('prices'), region_name)
+            f.write(write_result)
+        wrt_ebs_result = '%s,%s,,%d,,,%s\n' % (project,'EBS',result_dict.get('ebs'),region_name)
+        f.write(write_result)
     f.close()
 
 def GetELB(profile,region,report_filename):
@@ -453,9 +459,9 @@ def main(account):
     elasticache_filename = 'export-elasticache-'+today+'.csv'
     account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
-    # for region in Regions:
+    for region in Regions:
         # GetEC2(account, region, ec2_filename)
-    GetEC2v2(account, 'us-east-1', ec2_filename)
+        GetEC2v2(account, region, ec2_filename)
         # GetELB(account, region, ec2_filename)
         # GetRDS(account, account_id.get(account), region,rds_filename)
         # GetRedshift(account, account_id.get(account), 'us-east-1',redshift_filename)
