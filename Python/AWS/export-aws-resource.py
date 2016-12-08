@@ -192,14 +192,14 @@ def GetEC2v2(profile,region,report_filename,compare_date=0):
                             result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 ,'num': 0}
                             result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
                             result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
-                            result_dict[instance_project]['ec2'][instance_type]['num'] ++
+                            result_dict[instance_project]['ec2'][instance_type]['num'] += 1
                             result_dict[instance_project]['ebs'] += instance_volume_size
                     else:
                         result_dict[instance_project] = {'ec2':{},'ebs':0}
                         result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 ,'num': 0}
                         result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
                         result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
-                        result_dict[instance_project]['ec2'][instance_type]['num'] ++
+                        result_dict[instance_project]['ec2'][instance_type]['num'] += 1
                         result_dict[instance_project]['ebs'] += instance_volume_size
 
                 except Exception,e:
