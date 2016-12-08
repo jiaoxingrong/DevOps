@@ -347,7 +347,7 @@ def GetRDS(profile,account,region,report_filename,compare_date=0):
 
     for project in result_dict:
         for type in result_dict.get(project).get('rds'):
-            db_type_info = result_dict.get(project).get('ec2').get(type)
+            db_type_info = result_dict.get(project).get('rds').get(type)
             write_result = '%s,%s,%s,%d,%d,%.2f,%s\n' % (project,'RDS', type, db_type_info.get('num'),db_type_info.get('hours'), db_type_info.get('prices'), region_name)
             f.write(write_result)
         wrt_ebs_result = '%s,%s,,%d,,,%s\n' % (project,'rds-storage',result_dict.get(project).get('rds-storage'),region_name)
