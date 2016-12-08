@@ -66,9 +66,6 @@ def get_ec2_price(region,instance_type,platform):
     if res:
         return res[0][0]
 def GetEC2(profile,region,report_filename,compare_date=0):
-    #access_key = os.environ.get('AWS_ACCESS_KEY')
-    #secret_key = os.environ.get('AWS_SECRET_KEY')
-
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -135,6 +132,82 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                 except Exception,e:
                     print Exception, ":", e, instance_name
     f.close()
+def GetEC2v2(profile,region,report_filename,compare_date=0):
+    result_dict = {}
+    region_name = region_contrast.get(region)
+    f = file(report_filename,'a')
+    f.seek(0,2)
+    session = boto3.Session(
+        profile_name=profile,
+        region_name=region
+    )
+    client = session.client('ec2')
+    api_response = client.describe_vpcs()
+    vpc_ids = [ vpc_id['VpcId'] for vpc_id in api_response['Vpcs'] ]
+    client = session.resource('ec2')
+    for vpc_id in vpc_ids:
+        VPC = client.Vpc(vpc_id)
+        instances = VPC.instances.all()
+        if not instances:
+            return
+        for instance in instances:
+            if instance.state['Name'] == 'running':
+                for tag in instance.tags:
+                    if tag.get('Key') == 'Name':
+                        instance_name = tag['Value']
+
+                    if tag.get('Key') == 'Project':
+                        instance_project = tag.get('Value')
+                try:
+                    instance_project
+                except Exception, e:
+                    instance_project = instance_name
+                try:
+                    instance_volume_size = 0
+                    instance_type = instance.instance_type
+                    if compare_date:
+                        instance_run_hours = cal_run_hours(instance.launch_time,compare_date)
+                    else:
+                        instance_run_hours = cal_run_hours(instance.launch_time)
+
+                    instance_id = instance.instance_id
+
+                    for v in  instance.volumes.all():
+                        instance_volume_size += v.size
+
+                    if instance.platform:
+                        inst_platform = 'Windows'
+                    else:
+                        inst_platform = 'Linux'
+                    single_price = get_ec2_price(region,instance_type,inst_platform)
+                    month_price = instance_run_hours * single_price
+
+                    if result_dict.get(instance_project):
+                        if result_dict.get(instance_project).get('ec2').get(instance_type):
+                            result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
+                            result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
+                            result_dict[instance_project]['ebs'] += instance_volume_size
+                        else:
+                            result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 }
+                            result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
+                            result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
+                            result_dict[instance_project]['ebs'] += instance_volume_size
+                    else:
+                        result_dict[instance_project] = {'ec2':{},'ebs':0}
+                        result_dict[instance_project]['ec2'][instance_type] = {'hours': 0, 'prices': 0 }
+                        result_dict[instance_project]['ec2'][instance_type]['hours'] += instance_run_hours
+                        result_dict[instance_project]['ec2'][instance_type]['prices'] += month_price
+                        result_dict[instance_project]['ebs'] += instance_volume_size
+
+                    # write_result = '%s,%s,%s,%s,%d,%.2f,%d,%s\n' % ('EC2',
+                    #     instance_project, instance_name, instance_type, instance_run_hours, month_price, instance_volume_size,region_name)
+                    # f.write(write_result)
+                except Exception,e:
+                    print Exception, ":", e, instance_name
+
+    print result_dict
+    f.close()
+
 def GetELB(profile,region,report_filename):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
@@ -280,6 +353,7 @@ def GetRedshift(profile, account, region, report_filename, compare_date=0):
 
     for db in Clusters:
         db_name = db.get('ClusterIdentifier')
+        db_node_num = db.get('NumberOfNodes')
         db_ins_type = db.get('NodeType')
         db_arn = 'arn:aws:redshift:' + region + ':' + account + ':cluster:' + db_name
         db_tags = client.describe_tags(
@@ -301,8 +375,8 @@ def GetRedshift(profile, account, region, report_filename, compare_date=0):
             db_run_hours = cal_run_hours(db.get('ClusterCreateTime'))
 
         single_price = get_redshift_price(region, db_ins_type)
-        db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%s,%d,%.2f,%s\n' % ('Redshift',db_project, db_name, db_ins_type, db_run_hours, db_month_price, region_name)
+        db_month_price = db_run_hours * single_price * db_node_num
+        write_result = '%s,%s,%s,%s,%d,%d,%.2f,%s\n' % ('Redshift',db_project, db_name, db_ins_type, db_node_num, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
@@ -379,12 +453,13 @@ def main(account):
     elasticache_filename = 'export-elasticache-'+today+'.csv'
     account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
-    for region in Regions:
-        GetEC2(account, region, ec2_filename)
-        GetELB(account, region, ec2_filename)
-        GetRDS(account, account_id.get(account), region,rds_filename)
-        GetRedshift(account, account_id.get(account), region,redshift_filename)
-        GetElasticache(account, account_id.get(account), region,elasticache_filename)
+    # for region in Regions:
+        # GetEC2(account, region, ec2_filename)
+    GetEC2v2(account, 'us-east-1', ec2_filename)
+        # GetELB(account, region, ec2_filename)
+        # GetRDS(account, account_id.get(account), region,rds_filename)
+        # GetRedshift(account, account_id.get(account), 'us-east-1',redshift_filename)
+        # GetElasticache(account, account_id.get(account), region,elasticache_filename)
 
 if __name__ == '__main__':
-    main('mdata')
+    main('platform')
