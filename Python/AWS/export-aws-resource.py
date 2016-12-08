@@ -210,7 +210,7 @@ def GetEC2v2(profile,region,report_filename,compare_date=0):
             ins_type_info = result_dict.get(project).get('ec2').get(type)
             write_result = '%s,%s,%s,%d,%d,%.2f,%s\n' % (project,'EC2', type, ins_type_info.get('num'),ins_type_info.get('hours'), ins_type_info.get('prices'), region_name)
             f.write(write_result)
-        wrt_ebs_result = '%s,%s,,%d,,,%s\n' % (project,'EBS',result_dict.get('ebs'),region_name)
+        wrt_ebs_result = '%s,%s,,%d,,,%s\n' % (project,'EBS',result_dict.get(project).get('ebs'),region_name)
         f.write(write_result)
     f.close()
 
