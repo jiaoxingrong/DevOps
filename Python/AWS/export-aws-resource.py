@@ -6,6 +6,8 @@ import time
 import sys
 import datetime
 import calendar
+import csv
+from collections import namedtuple
 from sqlalchemy import create_engine, Table, Column, MetaData, select, INTEGER, VARCHAR, Float, and_
 
 reload(sys)
@@ -249,7 +251,7 @@ def GetELB(profile,region,report_filename):
                 result_dict[elb_project] = 1
 
     for elb in result_dict:
-        write_result = '%s,%s,%d,%s\n' % (elb, 'ELB', result_dict.get(elb), region_name)
+        write_result = '%s,%s,,%d,,,%s\n' % (elb, 'ELB', result_dict.get(elb), region_name)
         f.write(write_result)
     f.close()
 
@@ -407,7 +409,7 @@ def GetRedshift(profile, account, region, report_filename, compare_date=0):
         try:
             db_project
         except Exception, e:
-            db_project = 'Null'
+            db_project = db_name
 
         if compare_date:
             db_run_hours = cal_run_hours(db.get('ClusterCreateTime'),compare_date)
@@ -416,7 +418,7 @@ def GetRedshift(profile, account, region, report_filename, compare_date=0):
 
         single_price = get_redshift_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price * db_node_num
-        write_result = '%s,%s,%s,%s,%d,%d,%.2f,%s\n' % ('Redshift',db_project, db_name, db_ins_type, db_node_num, db_run_hours, db_month_price, region_name)
+        write_result = '%s,%s,%s,%d,%d,%.2f,%s\n' % (db_project, 'Redshift', db_ins_type, db_node_num, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
@@ -470,7 +472,7 @@ def GetElasticache(profile,account,region,report_filename,compare_date=0):
         try:
             db_project
         except Exception, e:
-            db_project = 'Null'
+            db_project = db_name
 
         if compare_date:
             db_run_hours = cal_run_hours(db.get('CacheClusterCreateTime'),compare_date)
@@ -479,27 +481,96 @@ def GetElasticache(profile,account,region,report_filename,compare_date=0):
 
         single_price = get_elasticache_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,%s,%d,%.2f,%s\n' % ('Elasticache',db_project, db_name, db_ins_type, db_run_hours, db_month_price, region_name)
+        write_result = '%s,%s,%s,,%d,%.2f,%s\n' % (db_project, 'Elasticache', db_ins_type, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
+
+def final_statistical(file_name):
+    final_dict = {}
+    # = {Project:{'ec2':{'c4.large':{'number':  'hours':  ,'prices'  ,},'m4.large': }},'ebs':{'num': ,'prices': ,}, 'elb': {} ,}
+    date = time.strftime('%Y-%m',time.localtime(time.time()))
+    final_file_name = 'AWS-Bill-' + date + '.csv'
+    final_f = open(final_file_name,'a')
+    source_f = open(file_name)
+    f_csv = csv.reader(source_f)
+    headers = next(f_csv)
+    Row = namedtuple('Row',headers)
+
+    for r in f_csv:
+        row = Row(*r)
+
+        if final_dict.get(row.Project):
+            if final_dict.get(row.Project).get(row.Service):
+                if row.type:
+                    if final_dict.get(row.Project).get(row.Service).get(row.type):
+                        final_dict[row.Project][row.Service][row.type]['number'] += int(row.number)
+                        final_dict[row.Project][row.Service][row.type]['hours']  += int(row.hours)
+                        final_dict[row.Project][row.Service][row.type]['prices'] += float(row.prices)
+                    else:
+                            final_dict[row.Project][row.Service][row.type] = {'number': 0, 'hours': 0, 'prices': 0}
+                            final_dict[row.Project][row.Service][row.type]['number'] += int(row.number)
+                            final_dict[row.Project][row.Service][row.type]['hours']  += int(row.hours)
+                            final_dict[row.Project][row.Service][row.type]['prices'] += float(row.prices)
+                else:
+                    final_dict[row.Project][row.Service]['number'] += int(row.number)
+                    final_dict[row.Project][row.Service]['prices'] += float(row.prices)
+            else:
+                if row.type:
+                    final_dict[row.Project][row.Service] = {}
+                    final_dict[row.Project][row.Service][row.type] = {'number': 0, 'hours': 0, 'prices': 0}
+                    final_dict[row.Project][row.Service][row.type]['number'] += int(row.number)
+                    final_dict[row.Project][row.Service][row.type]['hours']  += int(row.hours)
+                    final_dict[row.Project][row.Service][row.type]['prices'] += float(row.prices)
+                else:
+                    final_dict[row.Project][row.Service] = {'number': 0, 'prices': 0}
+                    final_dict[row.Project][row.Service]['number'] += int(row.number)
+                    final_dict[row.Project][row.Service]['prices'] += float(row.prices)
+        else:
+            if row.type:
+                final_dict[row.Project] = {}
+                final_dict[row.Project][row.Service] = {}
+                final_dict[row.Project][row.Service][row.type] = {'number': 0, 'hours': 0, 'prices': 0}
+                final_dict[row.Project][row.Service][row.type]['number'] += int(row.number)
+                final_dict[row.Project][row.Service][row.type]['hours']  += int(row.hours)
+                final_dict[row.Project][row.Service][row.type]['prices'] += float(row.prices)
+            else:
+                final_dict[row.Project] = {}
+                final_dict[row.Project][row.Service] = {'number': 0, 'prices': 0}
+                final_dict[row.Project][row.Service]['number'] += int(row.number)
+                final_dict[row.Project][row.Service]['prices'] += float(row.prices)
+
+    for project in final_dict:
+        for service in final_dict.get(project):
+            for type in final_dict.get(project).get(service):
+                try:
+                    hours = final_dict.get(project).get(service).get(type).get('hours')
+                    number = final_dict.get(project).get(service).get(type).get('number')
+                    prices = final_dict.get(project).get(service).get(type).get('prices')
+                    wrt_res = '%s,%s,%s,%d,%d,%.2f\n' % (project,service,type,number,hours,prices)
+                except Exception, e:
+                    wrt_res = '%s,%s,,%d,,%.2f\n' % (project,service,number,prices)
+
+                final_f.write(wrt_res)
+    final_f.close()
 
 def main(account):
     Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 
-    ec2_filename = 'export-ec2-'+today+'.csv'
-    rds_filename = 'export-rds-'+today+'.csv'
-    redshift_filename = 'export-redshift-'+today+'.csv'
-    elasticache_filename = 'export-elasticache-'+today+'.csv'
+    export_filename = 'export-aws-'+today+'.csv'
+    with file(export_filename,'w') as f:
+        f.write('Project,Service,type,number,hours,Prices,region\n')
     account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
     for region in Regions:
-        # GetEC2(account, region, ec2_filename)
-        # GetEC2v2(account, region, ec2_filename)
+        GetEC2(account, region, ec2_filename)
+        GetEC2v2(account, region, ec2_filename)
         GetELB(account, region, ec2_filename)
         GetRDS(account, account_id.get(account), region,rds_filename)
-        # GetRedshift(account, account_id.get(account), 'us-east-1',redshift_filename)
-        # GetElasticache(account, account_id.get(account), region,elasticache_filename)
+        GetRedshift(account, account_id.get(account), 'us-east-1',redshift_filename)
+        GetElasticache(account, account_id.get(account), region,elasticache_filename)
+
 
 if __name__ == '__main__':
     main('platform')
+    # final_statistical('/Users/Jerome/Documents/export.csv')
