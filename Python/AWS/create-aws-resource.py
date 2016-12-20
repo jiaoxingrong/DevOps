@@ -2,8 +2,11 @@
 #coding: utf-8
 import boto3
 
-def crt_elb(elb_name,instanceIds_list):
-    client = boto3.client('elb')
+def crt_elb(elb_name,instanceIds_list,region):
+    session = boto3.session.Session(
+        region_name = region
+    )
+    client = session.client('elb')
     res_crt_elb = client.create_load_balancer(
         LoadBalancerName=elb_name,
         Listeners=[
@@ -113,7 +116,9 @@ def crt_queue(region,QName):
         )
     print res
 
-update_domain = ['admin.gogen.oasgames.com','admin.goges.oasgames.com','admin.gogpl.oasgames.com']
+update_domain = ['naruto-en-cst-svr35.oasgames.com','naruto-en-cst-svr36.oasgames.com','naruto-en-cst-svr37.oasgames.com']
 
-for domain in update_domain:
-    create_route53_record(domain,'elb-oas-odp3-web-2046571698.ap-northeast-1.elb.amazonaws.com','UPSERT')
+# for domain in update_domain:
+create_route53_record(update_domain[0],'elb-naruto-gameserver35-2066929494.ap-southeast-1.elb.amazonaws.com','UPSERT')
+create_route53_record(update_domain[1],'elb-naruto-gameserver36-322422656.ap-southeast-1.elb.amazonaws.com','UPSERT')
+create_route53_record(update_domain[2],'elb-naruto-gameserver37-1255573817.ap-southeast-1.elb.amazonaws.com','UPSERT')
