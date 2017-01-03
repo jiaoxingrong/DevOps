@@ -485,13 +485,13 @@ def GetElasticache(profile,account,region,report_filename,compare_date=0):
         f.write(write_result)
     f.close()
 
-def final_statistical(file_name):
+def final_statistical(resourceFile,resultingFile):
     final_dict = {}
     # = {Project:{'ec2':{'c4.large':{'number':  'hours':  ,'prices'  ,},'m4.large': }},'ebs':{'num': ,'prices': ,}, 'elb': {} ,}
     date = time.strftime('%Y-%m',time.localtime(time.time()))
     final_file_name = 'AWS-Bill-' + date + '.csv'
-    final_f = open(final_file_name,'a')
-    source_f = open(file_name)
+    final_f = open(resultingFile,'a')
+    source_f = open(resourceFile)
     f_csv = csv.reader(source_f)
     headers = next(f_csv)
     Row = namedtuple('Row',headers)
@@ -555,22 +555,25 @@ def final_statistical(file_name):
 
 def main(account):
     Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
+
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
 
     export_filename = 'export-aws-'+today+'.csv'
+
     with file(export_filename,'w') as f:
         f.write('Project,Service,type,number,hours,Prices,region\n')
+
     account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
     for region in Regions:
-        GetEC2(account, region, ec2_filename)
+        # GetEC2(account, region, ec2_filename)
         GetEC2v2(account, region, ec2_filename)
         GetELB(account, region, ec2_filename)
         GetRDS(account, account_id.get(account), region,rds_filename)
-        GetRedshift(account, account_id.get(account), 'us-east-1',redshift_filename)
+        GetRedshift(account, account_id.get(account), region,redshift_filename)
         GetElasticache(account, account_id.get(account), region,elasticache_filename)
 
+    final_statistical(export_filename, 'aws-bill-resulting.' + today + '.csv')
 
 if __name__ == '__main__':
     main('platform')
-    # final_statistical('/Users/Jerome/Documents/export.csv')

@@ -7,6 +7,7 @@ def crt_elb(elb_name,instanceIds_list,region):
         region_name = region
     )
     client = session.client('elb')
+
     res_crt_elb = client.create_load_balancer(
         LoadBalancerName=elb_name,
         Listeners=[
@@ -53,6 +54,10 @@ def crt_elb(elb_name,instanceIds_list,region):
                 'Key': 'name',
                 'Value': elb_name
             },
+            {
+                'Key': 'Project',
+                'Value': 'naruto'
+            },
         ]
     )
     print res_crt_elb['DNSName']
@@ -69,12 +74,25 @@ def crt_elb(elb_name,instanceIds_list,region):
             },
         }
     )
+
     register_instance_args = []
     for id in instanceIds_list:
         register_instance_args.append({'InstanceId': id})
+
     res_register_instance = client.register_instances_with_load_balancer(
         LoadBalancerName = elb_name,
         Instances = register_instance_args
+    )
+
+    res_conf_check =  client.configure_health_check(
+        LoadBalancerName=elb_name,
+        HealthCheck={
+            'Target': 'TCP:36000',
+            'Interval': 30,
+            'Timeout': 5,
+            'UnhealthyThreshold': 2,
+            'HealthyThreshold': 10
+        }
     )
 
 def create_route53_record(domain,record,action):
@@ -116,9 +134,16 @@ def crt_queue(region,QName):
         )
     print res
 
-update_domain = ['naruto-en-cst-svr35.oasgames.com','naruto-en-cst-svr36.oasgames.com','naruto-en-cst-svr37.oasgames.com']
+update_domain = ['miwde.oasgames.com', 'mcouen.oasgames.com', 'mecen.oasgames.com', 'mtstrikeja.oasgames.com']
 
+# crt_elb('elb-naruto-gameserver39',['i-0d673918ec8956181'],'ap-southeast-1')
+# crt_elb('elb-naruto-gameserver40',['i-0f16391237b374c18'],'ap-southeast-1')
 # for domain in update_domain:
-create_route53_record(update_domain[0],'elb-naruto-gameserver35-2066929494.ap-southeast-1.elb.amazonaws.com','UPSERT')
-create_route53_record(update_domain[1],'elb-naruto-gameserver36-322422656.ap-southeast-1.elb.amazonaws.com','UPSERT')
-create_route53_record(update_domain[2],'elb-naruto-gameserver37-1255573817.ap-southeast-1.elb.amazonaws.com','UPSERT')
+create_route53_record('naruto-en-cst-svr38.oasgames.com','elb-naruto-gameserver38-1546793503.ap-southeast-1.elb.amazonaws.com','UPSERT')
+create_route53_record('naruto-en-cst-svr39.oasgames.com','elb-naruto-gameserver39-795870759.ap-southeast-1.elb.amazonaws.com','UPSERT')
+create_route53_record('naruto-en-cst-svr40.oasgames.com','elb-naruto-gameserver40-582366622.ap-southeast-1.elb.amazonaws.com','UPSERT')
+
+
+
+
+
