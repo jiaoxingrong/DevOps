@@ -567,11 +567,11 @@ def main(account):
 
     for region in Regions:
         # GetEC2(account, region, ec2_filename)
-        GetEC2v2(account, region, ec2_filename)
-        GetELB(account, region, ec2_filename)
-        GetRDS(account, account_id.get(account), region,rds_filename)
-        GetRedshift(account, account_id.get(account), region,redshift_filename)
-        GetElasticache(account, account_id.get(account), region,elasticache_filename)
+        GetEC2v2(account, region, export_filename)
+        GetELB(account, region, export_filename)
+        GetRDS(account, account_id.get(account), region,export_filename)
+        GetRedshift(account, account_id.get(account), region,export_filename)
+        GetElasticache(account, account_id.get(account), region,export_filename)
 
     final_statistical(export_filename, 'aws-bill-resulting.' + today + '.csv')
 
