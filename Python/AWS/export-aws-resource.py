@@ -207,6 +207,8 @@ def GetEC2v2(profile,region,report_filename,compare_date=0):
                 except Exception,e:
                     print Exception, ":", e, instance_name
 
+                del instance_project
+
     for project in result_dict:
         for type in result_dict.get(project).get('ec2'):
             ins_type_info = result_dict.get(project).get('ec2').get(type)
@@ -481,7 +483,7 @@ def GetElasticache(profile,account,region,report_filename,compare_date=0):
 
         single_price = get_elasticache_price(region, db_ins_type)
         db_month_price = db_run_hours * single_price
-        write_result = '%s,%s,%s,,%d,%.2f,%s\n' % (db_project, 'Elasticache', db_ins_type, db_run_hours, db_month_price, region_name)
+        write_result = '%s,%s,%s,%d,%d,%.2f,%s\n' % (db_project, 'Elasticache', db_ins_type, 1, db_run_hours, db_month_price, region_name)
         f.write(write_result)
     f.close()
 
@@ -548,8 +550,11 @@ def final_statistical(resourceFile,resultingFile):
                     prices = final_dict.get(project).get(service).get(type).get('prices')
                     wrt_res = '%s,%s,%s,%d,%d,%.2f\n' % (project,service,type,number,hours,prices)
                 except Exception, e:
+                    number = final_dict.get(project).get(service).get('number')
+                    prices = final_dict.get(project).get(service).get('prices')
                     wrt_res = '%s,%s,,%d,,%.2f\n' % (project,service,number,prices)
-
+                    final_f.write(wrt_res)
+                    break
                 final_f.write(wrt_res)
     final_f.close()
 
@@ -561,7 +566,7 @@ def main(account):
     export_filename = 'export-aws-'+today+'.csv'
 
     with file(export_filename,'w') as f:
-        f.write('Project,Service,type,number,hours,Prices,region\n')
+        f.write('Project,Service,type,number,hours,prices,region\n')
 
     account_id = {'platform': '027999362592', 'mdata': '315771499375'}
 
@@ -573,7 +578,8 @@ def main(account):
         GetRedshift(account, account_id.get(account), region,export_filename)
         GetElasticache(account, account_id.get(account), region,export_filename)
 
-    final_statistical(export_filename, 'aws-bill-resulting.' + today + '.csv')
-
 if __name__ == '__main__':
     main('platform')
+
+    # today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+    # final_statistical('/Users/Jerome/Documents/export-mdata-aws-2017-01-03.csv', 'aws-bill-resulting.' + today + '.csv')

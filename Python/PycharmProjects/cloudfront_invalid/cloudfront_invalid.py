@@ -12,9 +12,10 @@ token_dict = {'wQD5KYc2Qhcz': ['respwtrcdn.oasgames.com'],
               'QVfmlOAp83sc': ['dben-cdn.oasgames.com'],
               'UDCyra7aXXq9': ['download-mobile.oasgames.com']}
 
+
 def invalid_cdn(domain, urls=''):
     try:
-        session = boto3.Session(profile_name='oas-ops')
+        session = boto3.Session(profile_name='yi')
         cloudfront = session.client('cloudfront')
         api_response = cloudfront.list_distributions()
         dist_items = api_response.get('DistributionList').get('Items')
@@ -35,7 +36,7 @@ def invalid_cdn(domain, urls=''):
         urls = ['/*']
     else:
         invalid_num = len(urls)
-            
+    
     try:
         cloudfront.create_invalidation(
             DistributionId=domain_id,
@@ -57,6 +58,7 @@ def invalid_cdn(domain, urls=''):
 @app.route('/')
 def cloudfront():
     return render_template('index.html')
+
 
 @app.route('/api')
 def api():
