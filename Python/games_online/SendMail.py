@@ -9,10 +9,10 @@ import logging
 import datetime
 
 mail_host = 'email-smtp.us-east-1.amazonaws.com'
-mail_user = 'AKIAJIZFT7VVDUM6C27Q'
-mail_pass = 'AqCfPh2MEMwIGVUSFy4hfycAnBdIpPGMkWyNtrHB4TmC'
-mail_postfix = 'brotlab.net'
-mail_from_user = 'oas_zabbix@brotlab.net'
+mail_user = 'xxx'
+mail_pass = 'xxx'
+mail_postfix = 'xxx'
+mail_from_user = 'xxx'
 
 
 def send_mail(mail_to,subject,content):

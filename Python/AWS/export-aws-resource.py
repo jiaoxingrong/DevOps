@@ -579,7 +579,7 @@ def main(account):
         GetElasticache(account, account_id.get(account), region,export_filename)
 
 if __name__ == '__main__':
-    main('platform')
+    # main('platform')
 
-    # today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
-    # final_statistical('/Users/Jerome/Documents/export-mdata-aws-2017-01-03.csv', 'aws-bill-resulting.' + today + '.csv')
+    today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+    final_statistical('/Users/Jerome/Documents/export-aws-2017-02-04.csv', 'aws-bill-resulting.' + today + '.csv')

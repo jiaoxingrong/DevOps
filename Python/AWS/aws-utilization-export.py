@@ -12,10 +12,12 @@ sys.setdefaultencoding('GBK')
 
 CloudWatch_Config = {
         'EC2': {'Dimensions': ['InstanceId'], 'Metrics': ['CPUUtilization']},
-        'RDS': {'Dimensions': ['DBInstanceIdentifier'], 'Metrics': ['CPUUtilization','DatabaseConnections','FreeableMemory']},
+        'RDS': {'Dimensions': ['DBInstanceIdentifier'], 'Metrics': ['CPUUtilization']},
         'Redshift': {'Dimensions':['ClusterIdentifier'], 'Metrics': ['CPUUtilization']},
         'ElastiCache': {'Dimensions': ['CacheClusterId','CacheNodeId'], 'Metrics': ['CPUUtilization','FreeableMemory']}
     }
+
+ElastiCacheTypeInfo = {'cache.r3.large':  14495514624, 'cache.t2.medium':  3457448673.28, 'cache.t2.small':  1664299827.2, 'cache.t2.micro':  595926712.32}
 
 region_contrast = {
     'ap-northeast-2': 'Asia Pacific (Seoul)', 'ap-south-1': 'Asia Pacific (Mumbai)', 'sa-east-1': 'South America (Sao Paulo)', 'eu-west-1': 'EU (Ireland)', 'eu-central-1': 'EU (Frankfurt)', 'ap-southeast-1': 'Asia Pacific (Singapore)', 'ap-southeast-2': 'Asia Pacific (Sydney)', 'us-west-1': 'US West (N. California)', 'ap-northeast-1': 'Asia Pacific (Tokyo)', 'us-west-2': 'US West (Oregon)', 'us-east-1': 'US East (N. Virginia)', 'us-east-2': 'US East (Ohio)'
@@ -49,7 +51,7 @@ def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=d
         # ],
         StartTime=start_time,
         EndTime=end_time,
-        Period=86400,
+        Period=300,
         Statistics=[
             'Average'
         ]
@@ -99,10 +101,15 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                             DataPoints = GetCloudWatchData(profile, region, 'AWS/EC2', Dimensions, metric, compare_date)
                         else:
                             DataPoints = GetCloudWatchData(profile, region, 'AWS/EC2', Dimensions, metric)
+
+                        if len([ i for i in Datapoints if i > 50]) > len(Datapoints)*0.05:
+                            ifHighUtil = 'yes'
+                        else:
+                            ifHighUtil = 'no'
                         DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
                         file_body += str(DataPoints_AVG)
 
-                    file_body += region_name + '\n'
+                    file_body += region_name + '\n' + ifHighUtil + ''
                     f.write(file_body)
                 except Exception,e:
                     print instance_name
@@ -217,7 +224,7 @@ def GetElasticache(profile,region,report_filename,compare_date=0):
         db_name = db.get('CacheClusterId')
         db_ins_type = db.get('CacheNodeType')
         Dimensions = [{'Name': 'CacheClusterId', 'Value': db_name}]
-        file_body = '%s,%s,%s,' %  ('RDS', db_name, db_ins_type)
+        file_body = '%s,%s,%s,' %  ('ElastiCache', db_name, db_ins_type)
 
         for metric in CloudWatch_Metrics:
             if compare_date:
