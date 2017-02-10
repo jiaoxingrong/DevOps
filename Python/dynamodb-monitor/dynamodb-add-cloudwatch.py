@@ -44,7 +44,8 @@ class add_dynamodb_cloudwatch():
         )
         
         response = response.get('Table').get('GlobalSecondaryIndexes')
-        indexes = [i.get('IndexName') for i in response]
+        if response:
+            indexes = [i.get('IndexName') for i in response]
         return indexes
         
     def table_add_alarm(self, table):
