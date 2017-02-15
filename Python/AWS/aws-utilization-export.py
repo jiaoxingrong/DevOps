@@ -27,6 +27,7 @@ def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=d
     year = int(Date[:4])
     month = int(Date[-2:])
 
+    print Date
     session = boto3.Session(profile_name=profile, region_name=region)
     client = session.client('cloudwatch')
 
@@ -56,6 +57,7 @@ def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=d
             'Average'
         ]
     )
+    print response
     Datapoints = [ i.get('Average') for i in response.get('Datapoints') ]
     return Datapoints
 
