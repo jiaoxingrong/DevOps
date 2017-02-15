@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DynamoDB-Create</title>
+    <link rel="stylesheet" href="static/bootstrap.min.css">
+    <link rel="stylesheet" href="static/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="static/bootstrap-select.min.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        body{background: aliceblue}
+        .main{
+            background: azure;
+            margin-top: 40px;
+            border: solid 3px #ffcc8a;
+            padding: 30px 40px 70px 60px;
+        }
+
+        .crt-h2{
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+        .sort-key{
+            display: none;
+        }
+        .md-sort-key {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Modal -->
+<div class="modal fade" id="gsi-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Add index</h4>
+      </div>
+
+      <div class="modal-body">
+        <div class="row">
+          <form class="form-horizontal" role="form">
+            <div class="form-group">
+              <div class="col-sm-offset-1">
+                <div style="margin-bottom: 15px;margin-left: 50px">
+                      <label for="mdInputPrimaryKey" class="control-label">Primary key  *</label>
+                      <span style="margin-left: 20px;">Partition key</span>
+                    </div>
+
+                    <div>
+                      <div class="col-sm-offset-2 col-sm-3">
+                        <input type="text" class="form-control" id="mdInputPrimaryKey" name="mdPrimaryKey">
+                      </div>
+                        <select id="mdPrimaryKeyType" class="selectpicker" data-width="100px">
+                          <option value ="String">String</option>
+                          <option value ="Binary">Binary</option>
+                          <option value="Number">Number</option>
+                        </select>
+                    </div>
+
+                    <div class="checkbox col-sm-12" style="margin-bottom: 8px">
+                      <label class="col-sm-offset-2">
+                        <input class="md-sort-check" type="checkbox" >Add sort key
+                      </label>
+                    </div>
+
+                    <div class="md-sort-key">
+                      <div class="col-sm-offset-2 col-sm-3">
+                        <input id="mdInputSortKey" type="text" class="form-control" name="mdInputSortKey">
+                      </div>
+                        <select id="mdSortKeyType" class="selectpicker" data-width="100px">
+                          <option value="String">String</option>
+                          <option value="Binary">Binary</option>
+                          <option value="Number">Number</option>
+                        </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="mdIndexName" class="control-label col-sm-3">Index name  *</label>
+                  <div id="divToke" class="col-sm-3">
+                    <input id="mdIndexName" type="text" class="form-control" name="mdIndexName">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="mdProAttr" class="control-label col-sm-3">Projected attributes</label>
+                  <div class="col-sm-3">
+                      <select id="mdProAttr" class="selectpicker" data-width="205px">
+                          <option value="All">All</option>
+                          <option value="Keys only">Keys only</option>
+                          <option value="Include">Include</option>
+                      </select>
+                  </div>
+                </div>
+         </form>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Canel</button>
+        <button id="mdSave" type="button" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div> <!-- modal-->
+
+    <div class="container">
+        <div class="row">
+
+            <div class="main">
+                <h2 class="crt-h2">Create DynamoDB table</h2>
+
+                <form class="form-horizontal" role="form">
+                  <div class="form-group">
+                    <label for="inputTableName" class="col-sm-2 control-label">Table name*</label>
+                    <div class="col-sm-3">
+                      <input id="inputTableName" type="text" class="form-control" name="TableName">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="col-sm-offset-1" style="margin-bottom: 15px">
+                      <label for="inputPrimaryKey" class="control-label">Primary key  *</label>
+                      <span style="margin-left: 20px;">Partition key</span>
+                    </div>
+                    <div>
+                      <div class="col-sm-offset-2 col-sm-3">
+                        <input id="inputPrimaryKey" type="text" class="form-control" name="PrimaryKey">
+                      </div>
+                        <select id="PrimaryKeyType" class="selectpicker" data-width="100px">
+                          <option value ="String">String</option>
+                          <option value ="Binary">Binary</option>
+                          <option value="Number">Number</option>
+                        </select>
+                    </div>
+
+                    <div class="checkbox col-sm-12" style="margin-bottom: 8px">
+                      <label class="col-sm-offset-2">
+                        <input class="sort-check" type="checkbox" >Add sort key
+                      </label>
+                    </div>
+
+                    <div class="sort-key">
+                      <div class="col-sm-offset-2 col-sm-3">
+                        <input id="inputSortKey" type="text" class="form-control"  name="SortKey">
+                      </div>
+                        <select id="SortKeyType" class="selectpicker" data-width="100px">
+                          <option value ="String">String</option>
+                          <option value ="Binary">Binary</option>
+                          <option value="Number">Number</option>
+                        </select>
+                    </div>
+
+                  </div>
+
+                  <h4><span style="font-weight: bold">Table Setting</span></h4>
+
+                  <div class="col-sm-12">
+                      <h5 class="col-sm-3" style="font-weight: bold;margin-left: 45px">Secondary indexes</h5>
+                  </div>
+
+                  <div class="col-sm-12">
+                    <div class="col-sm-offset-2 col-sm-8"  style="margin-bottom: 15px">
+                      <table id="gsi-table" class="table table-hover table-condensed table-bordered">
+                        <tr class="warning" style="font-weight: bold">
+                            <td>Name</td>
+                            <td>Type</td>
+                            <td>Partition key</td>
+                            <td>Sort key</td>
+                            <td>Projected Attributes</td>
+                        </tr>
+                      </table>
+
+                      <span><a data-toggle="modal" data-target="#gsi-modal">+ Add index</a></span>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="inputProject" class="col-sm-2 control-label">所属项目  *</label>
+                    <span style="margin-left: 16px">
+                        <select id="inputProject" class="selectpicker" data-width="100px">
+                          <option value ="odp3">odp3</option>
+                          <option value ="pay3">pay3</option>
+                        </select>
+                    </span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="inputToken" class="col-sm-2 control-label">Token  *</label>
+                    <div class="col-sm-3">
+                      <input id="inputToken" type="password" class="form-control" placeholder="输入提供的Token" name="Token">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="col-sm-offset-3">
+                      <button id="submit" type="button" class="btn btn-default">点击创建</button>
+                    </div>
+                  </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/bootstrap-select.min.js"></script>
+    <script>
+        function show_add_sort_key(sort_check_class, sort_key_class) {
+          $("." + sort_check_class).click(function () {
+              if ( $("." + sort_check_class).is(":checked") == true) {
+                  $("." + sort_key_class).css('display','block');
+                }else {
+                  $("." + sort_key_class).css('display','none');
+              }
+          })
+        }
+
+        var gsi = {}
+
+        function modalSave() {
+            var gsi_primary_key = $('#mdInputPrimaryKey').val()
+            var gsi_primary_key_type = $('#mdPrimaryKeyType').val()
+            var gsi_sort_key = $('#mdInputSortKey').val()
+            var gsi_sort_key_type = $('#mdSortKeyType').val()
+            var gsi_name = $('#mdIndexName').val()
+            var gsi_pro_attr = $('#mdProAttr').val()
+
+            if (gsi_primary_key && gsi_name){
+                gsi[gsi_name] = {
+                    'PrimaryKey': [gsi_primary_key, gsi_sort_key_type],
+                    'SortKey': [gsi_sort_key, gsi_sort_key_type],
+                    'ProAttr': gsi_pro_attr
+                }
+
+                var tr = document.createElement('tr')
+                var td_gsi_name = document.createElement('td')
+                var td_gsi_name_text = document.createTextNode(gsi_name)
+                td_gsi_name.appendChild(td_gsi_name_text)
+                tr.appendChild(td_gsi_name)
+                $('#gsi-table').appendChild(tr)
+
+                $('.modal').modal('hide')
+
+                console.log(gsi_name,gsi_primary_key,gsi_primary_key_type,gsi_sort_key,gsi_sort_key_type,gsi_pro_attr)
+
+            }else {
+                alert('分区键和索引名称不能为空。')
+            }
+        }
+        
+        show_add_sort_key('sort-check', 'sort-key')
+        show_add_sort_key('md-sort-check', 'md-sort-key')
+
+        $('#mdSave').click(modalSave)
+    </script>
+</body>
+</html>

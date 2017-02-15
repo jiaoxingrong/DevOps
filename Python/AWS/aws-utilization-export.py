@@ -51,7 +51,7 @@ def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=d
         # ],
         StartTime=start_time,
         EndTime=end_time,
-        Period=300,
+        Period=86400,
         Statistics=[
             'Average'
         ]
