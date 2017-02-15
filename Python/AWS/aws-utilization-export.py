@@ -28,7 +28,6 @@ def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='
     year = int(Date[:4])
     month = int(Date[-2:])
 
-    print Date
     session = boto3.Session(profile_name=profile, region_name=region)
     client = session.client('cloudwatch')
 
@@ -151,8 +150,12 @@ def GetRDS(profile,region,report_filename,compare_date=0):
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/RDS', Dimensions, metric, compare_date)
             else:
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/RDS', Dimensions, metric)
-            DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
-            file_body += str(DataPoints_AVG)
+            try:
+                DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
+                file_body += str(DataPoints_AVG)
+            except Exception, e:
+                print db_name
+                print Exception,":", e
         file_body += region_name + '\n'
         f.write(file_body)
     f.close()
@@ -194,12 +197,11 @@ def GetRedshift(profile, region, report_filename, compare_date=0):
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/Redshift', Dimensions, metric)
             try:
                 DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
+                file_body += str(DataPoints_AVG)
             except Exception, e:
                 pass
-            file_body += str(DataPoints_AVG)
         file_body += region_name + '\n'
         f.write(file_body)
-
     f.close()
 
 def GetElasticache(profile,region,report_filename,compare_date=0):
@@ -236,9 +238,9 @@ def GetElasticache(profile,region,report_filename,compare_date=0):
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/ElastiCache', Dimensions, metric)
             try:
                 DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
+                file_body += str(DataPoints_AVG)
             except Exception, e:
-                break
-            file_body += str(DataPoints_AVG)
+                print Exception,":", e
         file_body += region_name + '\n'
         f.write(file_body)
     f.close()
