@@ -23,7 +23,8 @@ region_contrast = {
     'ap-northeast-2': 'Asia Pacific (Seoul)', 'ap-south-1': 'Asia Pacific (Mumbai)', 'sa-east-1': 'South America (Sao Paulo)', 'eu-west-1': 'EU (Ireland)', 'eu-central-1': 'EU (Frankfurt)', 'ap-southeast-1': 'Asia Pacific (Singapore)', 'ap-southeast-2': 'Asia Pacific (Sydney)', 'us-west-1': 'US West (N. California)', 'ap-northeast-1': 'Asia Pacific (Tokyo)', 'us-west-2': 'US West (Oregon)', 'us-east-1': 'US East (N. Virginia)', 'us-east-2': 'US East (Ohio)'
     }
 
-def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=datetime.datetime.utcnow().strftime('%Y%m')):
+# def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=datetime.datetime.utcnow().strftime('%Y%m')):
+def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='201701'):
     year = int(Date[:4])
     month = int(Date[-2:])
 
@@ -104,7 +105,7 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                         else:
                             DataPoints = GetCloudWatchData(profile, region, 'AWS/EC2', Dimensions, metric)
 
-                        if len([ i for i in Datapoints if i > 50]) > len(Datapoints)*0.05:
+                        if len([ i for i in DataPoints if i > 50]) > len(DataPoints)*0.05:
                             ifHighUtil = 'yes'
                         else:
                             ifHighUtil = 'no'
