@@ -57,9 +57,8 @@ def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='
             'Average'
         ]
     )
-    print response
-    Datapoints = [ i.get('Average') for i in response.get('Datapoints') ]
-    return Datapoints
+    DataPoints = [ i.get('Average') for i in response.get('Datapoints') ]
+    return DataPoints
 
 def GetEC2(profile,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)

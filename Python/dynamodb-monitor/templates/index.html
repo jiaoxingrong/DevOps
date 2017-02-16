@@ -55,7 +55,7 @@
                       <div class="col-sm-offset-2 col-sm-3">
                         <input type="text" class="form-control" id="mdInputPrimaryKey" name="mdPrimaryKey">
                       </div>
-                        <select id="mdPrimaryKeyType" class="selectpicker" data-width="100px">
+                        <select id="mdPrimaryKeyType" class="selectpicker mdSelect" data-width="100px">
                           <option value ="String">String</option>
                           <option value ="Binary">Binary</option>
                           <option value="Number">Number</option>
@@ -72,7 +72,7 @@
                       <div class="col-sm-offset-2 col-sm-3">
                         <input id="mdInputSortKey" type="text" class="form-control" name="mdInputSortKey">
                       </div>
-                        <select id="mdSortKeyType" class="selectpicker" data-width="100px">
+                        <select id="mdSortKeyType" class="selectpicker mdSelect" data-width="100px">
                           <option value="String">String</option>
                           <option value="Binary">Binary</option>
                           <option value="Number">Number</option>
@@ -90,7 +90,7 @@
                 <div class="form-group">
                   <label for="mdProAttr" class="control-label col-sm-3">Projected attributes</label>
                   <div class="col-sm-3">
-                      <select id="mdProAttr" class="selectpicker" data-width="205px">
+                      <select id="mdProAttr" class="selectpicker mdSelect" data-width="205px">
                           <option value="All">All</option>
                           <option value="Keys only">Keys only</option>
                           <option value="Include">Include</option>
@@ -228,9 +228,14 @@
             var gsi_primary_key = $('#mdInputPrimaryKey').val()
             var gsi_primary_key_type = $('#mdPrimaryKeyType').val()
             var gsi_sort_key = $('#mdInputSortKey').val()
-            var gsi_sort_key_type = $('#mdSortKeyType').val()
             var gsi_name = $('#mdIndexName').val()
             var gsi_pro_attr = $('#mdProAttr').val()
+
+            if (gsi_sort_key){
+                var gsi_sort_key_type = $('#mdSortKeyType').val()
+            }else {
+                var gsi_sort_key_type = '-'
+            }
 
             if (gsi_primary_key && gsi_name){
                 gsi[gsi_name] = {
@@ -240,12 +245,36 @@
                 }
 
                 var tr = document.createElement('tr')
-                var td_gsi_name = document.createElement('td')
-                var td_gsi_name_text = document.createTextNode(gsi_name)
-                td_gsi_name.appendChild(td_gsi_name_text)
-                tr.appendChild(td_gsi_name)
-                $('#gsi-table').appendChild(tr)
 
+                function addTd(text) {
+                    var td = document.createElement('td')
+                    var td_text = document.createTextNode(text)
+                    td.appendChild(td_text)
+                    tr.appendChild(td)
+                }
+
+                function swipVal() {
+                    $('#mdInputPrimaryKey').val('');
+                    $('#mdPrimaryKeyType').val('');
+                    $('#mdInputSortKey').val('');
+                    $('#mdIndexName').val('');
+                    $('#mdProAttr').val('');
+
+                    $.each($('.mdSelect'),function(i,item){
+                        alert($(item).html());
+                       $(item).val($(item).children('option:eq(0)').val())
+                    });
+                }
+
+                addTd(gsi_name)
+                addTd('GSI')
+                addTd(gsi_primary_key + '(' + gsi_primary_key_type + ')')
+                addTd(gsi_sort_key + '(' + gsi_sort_key_type + ')')
+                addTd(gsi_pro_attr)
+
+                $('#gsi-table').append(tr)
+
+                swipVal();
                 $('.modal').modal('hide')
 
                 console.log(gsi_name,gsi_primary_key,gsi_primary_key_type,gsi_sort_key,gsi_sort_key_type,gsi_pro_attr)
