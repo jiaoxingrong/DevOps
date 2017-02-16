@@ -106,7 +106,7 @@ def create_route53_record(domain,record,action):
                     'Action': action,
                     'ResourceRecordSet': {
                         'Name': domain,
-                        'Type': 'CNAME',
+                        'Type': 'A',
                         'ResourceRecords': [
                             {
                                 'Value': record,
@@ -134,16 +134,9 @@ def crt_queue(region,QName):
         )
     print res
 
-update_domain = ['miwde.oasgames.com', 'mcouen.oasgames.com', 'mecen.oasgames.com', 'mtstrikeja.oasgames.com']
+update_domain = ['a.akar.oasgames.com', 'a.akes.oasgames.com', 'a.akpl.oasgames.com', 'a.aktr.oasgames.com', 'a.botpt.oasgames.com', 'a.caes.oasgames.com', 'a.catr.oasgames.com', 'a.ddtes.oasgames.com', 'a.dhtr.oasgames.com', 'a.eoept.oasgames.com', 'a.gogen.oasgames.com', 'a.goges.oasgames.com', 'a.gogpl.oasgames.com', 'a.gogtr.oasgames.com', 'a.gtest.oasgames.com', 'a.irpt.oasgames.com', 'a.istriketr.oasgames.com', 'a.katr.oasgames.com', 'a.koips4en.oasgames.com', 'a.koips4tw.oasgames.com', 'a.ksde.oasgames.com', 'a.kspt.oasgames.com', 'a.lees.oasgames.com', 'a.lepl.oasgames.com', 'a.lept.oasgames.com', 'a.leru.oasgames.com', 'a.loar.oasgames.com', 'a2.lobr.oasgames.com', 'adm.lobr.oasgames.com', 'a2.lode.oasgames.com', 'a.loel.oasgames.com', 'a2.loes.oasgames.com', 'a.lofr.oasgames.com', 'a.loit.oasgames.com', 'a2.lonl.oasgames.com', 'a2.lopl.oasgames.com', 'a.loru.oasgames.com', 'a2.losv.oasgames.com', 'a2.lotr.oasgames.com', 'a.lyde.oasgames.com', 'a.mwen.oasgames.com', 'a.mwpt.oasgames.com', 'a.mwtr.oasgames.com', 'a.narutode.oasgames.com', 'a.narutoen.oasgames.com', 'a.narutoes.oasgames.com', 'a.narutofr.oasgames.com', 'a.narutopt.oasgames.com', 'adm.odp.oasgames.com', 'a.oktr.oasgames.com', 'a.pwartr.oasgames.com', 'a.sctr.oasgames.com', 'a.slen.oasgames.com', 'a.solen.oasgames.com', 'a.sosde.oasgames.com', 'a.tigerknighten.oasgames.com', 'a.wftr.oasgames.com', 'a.zgtw.oasgames.com']
 
 # crt_elb('elb-naruto-gameserver39',['i-0d673918ec8956181'],'ap-southeast-1')
 # crt_elb('elb-naruto-gameserver40',['i-0f16391237b374c18'],'ap-southeast-1')
-# for domain in update_domain:
-create_route53_record('naruto-en-cst-svr38.oasgames.com','elb-naruto-gameserver38-1546793503.ap-southeast-1.elb.amazonaws.com','UPSERT')
-create_route53_record('naruto-en-cst-svr39.oasgames.com','elb-naruto-gameserver39-795870759.ap-southeast-1.elb.amazonaws.com','UPSERT')
-create_route53_record('naruto-en-cst-svr40.oasgames.com','elb-naruto-gameserver40-582366622.ap-southeast-1.elb.amazonaws.com','UPSERT')
-
-
-
-
-
+for domain in update_domain:
+    create_route53_record(domain, '34.194.126.123', 'UPSERT')
