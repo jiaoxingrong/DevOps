@@ -57,14 +57,14 @@
                       </div>
                         <select id="mdPrimaryKeyType" class="selectpicker mdSelect" data-width="100px">
                           <option value ="String">String</option>
-                          <option value ="Binary">Binary</option>
                           <option value="Number">Number</option>
+                          <option value ="Binary">Binary</option>
                         </select>
                     </div>
 
                     <div class="checkbox col-sm-12" style="margin-bottom: 8px">
                       <label class="col-sm-offset-2">
-                        <input class="md-sort-check" type="checkbox" >Add sort key
+                        <input id="md-sort-check" class="md-sort-check" type="checkbox" >Add sort key
                       </label>
                     </div>
 
@@ -74,8 +74,8 @@
                       </div>
                         <select id="mdSortKeyType" class="selectpicker mdSelect" data-width="100px">
                           <option value="String">String</option>
-                          <option value="Binary">Binary</option>
                           <option value="Number">Number</option>
+                          <option value="Binary">Binary</option>
                         </select>
                     </div>
                   </div>
@@ -91,9 +91,8 @@
                   <label for="mdProAttr" class="control-label col-sm-3">Projected attributes</label>
                   <div class="col-sm-3">
                       <select id="mdProAttr" class="selectpicker mdSelect" data-width="205px">
-                          <option value="All">All</option>
-                          <option value="Keys only">Keys only</option>
-                          <option value="Include">Include</option>
+                          <option value="ALL">All</option>
+                          <option value="KEYS_ONLY">Keys_only</option>
                       </select>
                   </div>
                 </div>
@@ -135,8 +134,8 @@
                       </div>
                         <select id="PrimaryKeyType" class="selectpicker" data-width="100px">
                           <option value ="String">String</option>
-                          <option value ="Binary">Binary</option>
                           <option value="Number">Number</option>
+                          <option value ="Binary">Binary</option>
                         </select>
                     </div>
 
@@ -152,8 +151,8 @@
                       </div>
                         <select id="SortKeyType" class="selectpicker" data-width="100px">
                           <option value ="String">String</option>
-                          <option value ="Binary">Binary</option>
                           <option value="Number">Number</option>
+                          <option value ="Binary">Binary</option>
                         </select>
                     </div>
 
@@ -179,6 +178,17 @@
 
                       <span><a data-toggle="modal" data-target="#gsi-modal">+ Add index</a></span>
                     </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="inputRegion" class="col-sm-2 control-label">地区  *</label>
+                    <span style="margin-left: 16px">
+                        <select id="inputRegion" class="selectpicker" data-width="200px">
+                          <option value ="us-east-1">US East (N. Virginia)</option>
+                          <option value ="eu-central-1">EU (Frankfurt)</option>
+                          <option value ="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                        </select>
+                    </span>
                   </div>
 
                   <div class="form-group">
@@ -222,8 +232,6 @@
           })
         }
 
-        var gsi = {}
-
         function modalSave() {
             var gsi_primary_key = $('#mdInputPrimaryKey').val()
             var gsi_primary_key_type = $('#mdPrimaryKeyType').val()
@@ -238,56 +246,90 @@
             }
 
             if (gsi_primary_key && gsi_name){
-                gsi[gsi_name] = {
-                    'PrimaryKey': [gsi_primary_key, gsi_sort_key_type],
-                    'SortKey': [gsi_sort_key, gsi_sort_key_type],
-                    'ProAttr': gsi_pro_attr
+                if (gsi_sort_key) {
+                    gsi[gsi_name] = {
+                        'PrimaryKey': {'name': gsi_primary_key, 'type': gsi_primary_key_type},
+                        'SortKey': {'name': gsi_sort_key, 'type': gsi_sort_key_type},
+                        'ProAttr': gsi_pro_attr
+                    }
+                }else {
+                    gsi[gsi_name] = {
+                        'PrimaryKey': {'name': gsi_primary_key, 'type': gsi_primary_key_type},
+                        'ProAttr': gsi_pro_attr
+                    }
                 }
-
-                var tr = document.createElement('tr')
-
                 function addTd(text) {
                     var td = document.createElement('td')
                     var td_text = document.createTextNode(text)
                     td.appendChild(td_text)
                     tr.appendChild(td)
                 }
-
-                function swipVal() {
+                function swipeVal() {
                     $('#mdInputPrimaryKey').val('');
-                    $('#mdPrimaryKeyType').val('');
                     $('#mdInputSortKey').val('');
                     $('#mdIndexName').val('');
-                    $('#mdProAttr').val('');
-
-                    $.each($('.mdSelect'),function(i,item){
-                        alert($(item).html());
-                       $(item).val($(item).children('option:eq(0)').val())
-                    });
+                    $('#md-sort-check').prop('checked', false)
+                    $('.md-sort-key').css('display','none');
                 }
-
+                var tr = document.createElement('tr')
                 addTd(gsi_name)
                 addTd('GSI')
                 addTd(gsi_primary_key + '(' + gsi_primary_key_type + ')')
                 addTd(gsi_sort_key + '(' + gsi_sort_key_type + ')')
                 addTd(gsi_pro_attr)
-
                 $('#gsi-table').append(tr)
-
-                swipVal();
+                swipeVal();
                 $('.modal').modal('hide')
-
-                console.log(gsi_name,gsi_primary_key,gsi_primary_key_type,gsi_sort_key,gsi_sort_key_type,gsi_pro_attr)
+{#                console.log(gsi_name,gsi_primary_key,gsi_primary_key_type,gsi_sort_key,gsi_sort_key_type,gsi_pro_attr)#}
 
             }else {
                 alert('分区键和索引名称不能为空。')
             }
         }
-        
+
+        function submitData() {
+            $('#submit').html('<span class="glyphicon glyphicon-refresh"></span>创建中，请稍后...')
+            var tableName = $('#inputTableName').val()
+            var primaryKey = $('#inputPrimaryKey').val()
+            var primaryKeyType = $('#PrimaryKeyType').val()
+            var region = $('#inputRegion').val()
+            var project = $('#inputProject').val()
+            var token = $('#inputToken').val()
+
+            var tableSortKey = $('#inputSortKey').val()
+            var tableSortKeyType = $('#SortKeyType').val()
+
+            var postData = {
+                'token': token,
+                'region': region,
+                'project': project,
+                'table': {
+                    'name': tableName,
+                    'PrimaryKey': {'name': primaryKey, 'type': primaryKeyType},
+                    'gsi': gsi
+                }
+            }
+
+            if (tableSortKey) {
+                postData['table']['SortKey'] = {'name': tableSortKey, 'type': tableSortKeyType}
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '/api',
+                data: {'data': JSON.stringify(postData)},
+                success: function (result) {
+                    alert(result)
+                    $('#submit').html('点击创建')
+                }
+            })
+        }
         show_add_sort_key('sort-check', 'sort-key')
         show_add_sort_key('md-sort-check', 'md-sort-key')
 
+        var gsi = {}
         $('#mdSave').click(modalSave)
+        $('#submit').click(submitData)
     </script>
 </body>
 </html>

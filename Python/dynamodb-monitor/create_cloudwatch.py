@@ -9,7 +9,8 @@ __mtime__ = '2017/2/9'
 
 import boto3
 
-class add_dynamodb_cloudwatch():
+
+class DynamoDBCloudWatch:
     def __init__(self, profile, region):
         self.region = region
         session = boto3.Session(
@@ -97,10 +98,18 @@ class add_dynamodb_cloudwatch():
                 ComparisonOperator='GreaterThanOrEqualToThreshold'
             )
     
+    def run(self, table):
+        self.table_add_alarm(table)
+        table_indexes = self.get_table_all_index(table)
+        if table_indexes:
+            for index in table_indexes:
+                self.indexes_add_alarm(table, index)
+            
+            
 def main():
     regions = ['ap-northeast-1', 'eu-central-1', 'us-east-1']
     for region in regions:
-        dynamodb = add_dynamodb_cloudwatch('platform', region)
+        dynamodb = DynamoDBCloudWatch('platform', region)
         tables = dynamodb.get_all_dynamodb()
         for dynamodb_table in tables:
             dynamodb.table_add_alarm(dynamodb_table)
