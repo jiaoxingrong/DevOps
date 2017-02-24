@@ -288,13 +288,20 @@
         }
 
         function submitData() {
-            $('#submit').html('<span class="glyphicon glyphicon-refresh"></span>创建中，请稍后...')
             var tableName = $('#inputTableName').val()
             var primaryKey = $('#inputPrimaryKey').val()
             var primaryKeyType = $('#PrimaryKeyType').val()
             var region = $('#inputRegion').val()
             var project = $('#inputProject').val()
             var token = $('#inputToken').val()
+
+            if (! tableName || ! primaryKey || ! token){
+                alert('token和表名称不能为空！')
+                return
+            }
+
+            $('#submit').html('<span class="glyphicon glyphicon-refresh"></span>创建中，请稍后...')
+
 
             var tableSortKey = $('#inputSortKey').val()
             var tableSortKeyType = $('#SortKeyType').val()
