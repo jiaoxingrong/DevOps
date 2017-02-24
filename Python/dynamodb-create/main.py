@@ -143,8 +143,12 @@ def index():
 
 @app.route('/api', methods=['POST'])
 def api():
-    post_data = request.form.get('data')
-    table_details = eval(post_data)
+    try:
+        post_data = request.form.get('data')
+        table_details = eval(post_data)
+    except Exception, e:
+        print Exception, e
+        return '请求参数错误！'
     print table_details
     result = process_data(table_details)
     return result
