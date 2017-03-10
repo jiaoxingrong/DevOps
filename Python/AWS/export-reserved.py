@@ -10,4 +10,4 @@ session = boto3.Session(
 ec2 = session.client('ec2')
 
 response = ec2.describe_instances()
-print response
+print response.get('Reservation')
