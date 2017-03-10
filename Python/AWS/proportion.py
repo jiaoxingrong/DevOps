@@ -9,6 +9,6 @@ def proportion(num_list,pro_num):
         total_num_list = sum(num_list)
         print "%.2f" % (pro_num * (num/total_num_list))
 
-num_list = [530,530,530,530,130,130,530,530,530,130,608,30]
-pro_num = 1168.24
+num_list = [200,500,1500,900,100,200,300,1500,300,200]
+pro_num = 811.01
 proportion(num_list,pro_num)

@@ -554,7 +554,7 @@ def final_statistical(resourceFile,resultingFile):
                     prices = final_dict.get(project).get(service).get('prices')
                     wrt_res = '%s,%s,,%d,,%.2f\n' % (project,service,number,prices)
                     final_f.write(wrt_res)
-                    break
+                    break·
                 final_f.write(wrt_res)
     final_f.close()
 
@@ -582,4 +582,4 @@ if __name__ == '__main__':
     # main('platform')
 
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
-    final_statistical('/Users/Jerome/Documents/export-aws-2017-02-04.csv', 'aws-bill-resulting.' + today + '.csv')
+    final_statistical('/Users/Jerome/Documents/aws-billing.csv', 'aws-bill-resulting.' + today + '.csv')

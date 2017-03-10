@@ -13,7 +13,8 @@ aws_profile = 'platform'
 
 token_config = {
     'SxrgZToidObM': {'odp3': {'policy': 'arn:aws:iam::027999362592:policy/oas-odp3-dynamodb-web-create'}},
-    'PKemDuhlFJnr': {'pay3': {'policy': 'arn:aws:iam::027999362592:policy/oas-pay3-dynamodb-web-create'}}
+    'PKemDuhlFJnr': {'pay3': {'policy': 'arn:aws:iam::027999362592:policy/oas-pay3-dynamodb-web-create'}},
+    'PKemDuhlFJnr': {'pay3': {'policy': 'arn:aws:iam::027999362592:policy/oas-pay3-dynamodb-web-create'}},
 }
 
 
@@ -154,4 +155,4 @@ def api():
     return result
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, thread=True)
