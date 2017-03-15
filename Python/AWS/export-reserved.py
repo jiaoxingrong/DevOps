@@ -62,7 +62,7 @@ def cachereserve(session, report_file, region_name, profile):
                 duration = resvere_ins.get('Duration')
                 time_delta = datetime.timedelta(seconds=duration)
                 expired_time = resvere_ins.get('StartTime') + time_delta
-                wrt_result = '%s,%s,%s,%s,%s,%s,%s\n' % (resvere_ins.get('ProductDescription'), resvere_ins.get('CacheNodeType'), resvere_ins.get('CacheNodeCount'), expired_time, region_name, profile)
+                wrt_result = '%s,%s,%s,%s,%s,%s\n' % (resvere_ins.get('ProductDescription'), resvere_ins.get('CacheNodeType'), resvere_ins.get('CacheNodeCount'), expired_time, region_name, profile)
                 f.write(wrt_result)
 
 
