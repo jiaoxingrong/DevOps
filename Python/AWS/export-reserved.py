@@ -8,10 +8,10 @@ import datetime
 def ec2reserve(session, report_file, region_name, profile):
     ec2 = session.client('ec2')
     response = ec2.describe_reserved_instances()
+    if not response.get('ReservedInstances'):
+        return
     with file(report_file, 'a') as f:
         f.seek(0,2)
-        if not response.get('ReservedInstances'):
-            return
         for resvere_ins in response.get('ReservedInstances'):
             if resvere_ins.get('State') == 'active':
                 wrt_result = '%s,%s,%s,%s,%s,%s\n' % (resvere_ins.get('ProductDescription'), resvere_ins.get('InstanceType'), resvere_ins.get('InstanceCount'), resvere_ins.get('End'), region_name, profile)
@@ -21,10 +21,11 @@ def ec2reserve(session, report_file, region_name, profile):
 def rdsreserve(session, report_file, region_name, profile):
     rds = session.client('rds')
     response = rds.describe_reserved_db_instances()
+    if not response.get('ReservedDBInstances'):
+        return
+
     with file(report_file, 'a') as f:
         f.seek(0,2)
-        if not response.get('ReservedDBInstances'):
-            return
         for resvere_ins in response.get('ReservedDBInstances'):
             if resvere_ins.get('State') == 'active':
                 duration = resvere_ins.get('Duration')
@@ -37,10 +38,11 @@ def rdsreserve(session, report_file, region_name, profile):
 def redshiftreserve(session, report_file, region_name, profile):
     redshift = session.client('redshift')
     response = redshift.describe_reserved_nodes()
+    if not response.get('ReservedDBInstances'):
+        return
+
     with file(report_file, 'a') as f:
         f.seek(0,2)
-        if not response.get('ReservedDBInstances'):
-            return
         for resvere_ins in response.get('ReservedDBInstances'):
             if resvere_ins.get('State') == 'active':
                 duration = resvere_ins.get('Duration')
@@ -53,10 +55,11 @@ def redshiftreserve(session, report_file, region_name, profile):
 def cachereserve(session, report_file, region_name, profile):
     elasticache = session.client('elasticache')
     response = elasticache.describe_reserved_cache_nodes()
+    if not response.get('ReservedCacheNodes'):
+            return
+
     with file(report_file, 'a') as f:
         f.seek(0,2)
-        if not response.get('ReservedCacheNodes'):
-            return
         for resvere_ins in response.get('ReservedCacheNodes'):
             if resvere_ins.get('State') == 'active':
                 duration = resvere_ins.get('Duration')
