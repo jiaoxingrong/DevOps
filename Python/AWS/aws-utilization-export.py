@@ -12,7 +12,7 @@ sys.setdefaultencoding('GBK')
 
 CloudWatch_Config = {
         'EC2': {'Dimensions': ['InstanceId'], 'Metrics': ['CPUUtilization']},
-        'RDS': {'Dimensions': ['DBInstanceIdentifier'], 'Metrics': ['CPUUtilization']},
+        'RDS': {'Dimensions': ['DBInstanceIdentifier'], 'Metrics': ['CPUUtilization', 'FreeableMemory']},
         'Redshift': {'Dimensions':['ClusterIdentifier'], 'Metrics': ['CPUUtilization']},
         'ElastiCache': {'Dimensions': ['CacheClusterId','CacheNodeId'], 'Metrics': ['CPUUtilization','FreeableMemory']}
     }
@@ -24,7 +24,7 @@ region_contrast = {
     }
 
 # def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=datetime.datetime.utcnow().strftime('%Y%m')):
-def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='201701'):
+def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='20'):
     year = int(Date[:4])
     month = int(Date[-2:])
 
@@ -151,7 +151,9 @@ def GetRDS(profile,region,report_filename,compare_date=0):
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/RDS', Dimensions, metric)
             try:
                 DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
-                file_body += str(DataPoints_AVG)
+                DataPoints_MIN = '%.2f,' % (min(DataPoints))
+                DataPoints_MAX = '%.2f,' % (max(DataPoints))
+                file_body += str(DataPoints_AVG) + DataPoints_MIN + DataPoints_MAX
             except Exception, e:
                 print db_name
                 print Exception,":", e
@@ -253,7 +255,7 @@ if __name__ == '__main__':
 
     report_filename = 'aws-utilization-'
     for region in Regions:
-        GetEC2('platform', region, report_filename + '-EC2-' + today + '.csv')
+        # GetEC2('platform', region, report_filename + '-EC2-' + today + '.csv')
         GetRDS('platform', region, report_filename + '-RDS-' + today + '.csv')
-        GetRedshift('platform', region, report_filename + '-Redshift-' + today + '.csv')
-        GetElasticache('platform', region, report_filename + '-ElastiCache-' + today + '.csv')
+        # GetRedshift('platform', region, report_filename + '-Redshift-' + today + '.csv')
+        # GetElasticache('platform', region, report_filename + '-ElastiCache-' + today + '.csv')
