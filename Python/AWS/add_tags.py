@@ -51,6 +51,36 @@ def ec2_tag(profile, region):
             except Exception,e:
                 print Exception, ":", e, instance_name
 
+
+def dynamodb_tag(profile, region):
+    session = boto3.Session(
+            profile_name=profile,
+            region_name=region
+        )
+
+    dynamodb = session.client('dynamodb')
+    tables = dynamodb.list_tables()
+    try:
+        for table in tables.get('TableNames'):
+            table_info = dynamodb.describe_table(
+                    TableName=table
+                )
+            table_arn = table_info.get('Table').get('TableArn')
+            add_tag = dynamodb.tag_resource(
+                ResourceArn=table_arn,
+                Tags=[
+                    {
+                        'Key': 'Name',
+                        'Value': table
+                    },
+                ]
+            )
+    except Exception, e:
+        print e
+
+
 regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
+
 for region in regions:
     ec2_tag('default', region)
+    dynamodb_tag('default', region)
