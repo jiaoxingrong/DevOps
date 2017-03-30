@@ -82,5 +82,5 @@ def dynamodb_tag(profile, region):
 regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
 
 for region in regions:
-    ec2_tag('default', region)
+    # ec2_tag('default', region)
     dynamodb_tag('default', region)
