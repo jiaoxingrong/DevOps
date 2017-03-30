@@ -4,7 +4,7 @@
 import boto3
 
 
-def ec2_tag(profile, region):
+def ec2_tag(profile, region, tables):
     session = boto3.Session(
         profile_name=profile,
         region_name=region
@@ -59,9 +59,9 @@ def dynamodb_tag(profile, region):
         )
 
     dynamodb = session.client('dynamodb')
-    tables = dynamodb.list_tables()
+    # tables = dynamodb.list_tables()
     try:
-        for table in tables.get('TableNames'):
+        for table in tables:
             table_info = dynamodb.describe_table(
                     TableName=table
                 )
@@ -70,8 +70,8 @@ def dynamodb_tag(profile, region):
                 ResourceArn=table_arn,
                 Tags=[
                     {
-                        'Key': 'Name',
-                        'Value': table
+                        'Key': 'Project',
+                        'Value': 'odp3'
                     },
                 ]
             )
@@ -80,7 +80,8 @@ def dynamodb_tag(profile, region):
 
 
 regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
+tables = ['odp-online-activity', 'odp-online-articles', 'odp-online-category', 'odp-online-game-publish-area', 'odp-online-games', 'odp-online-gift', 'odp-online-giftbag', 'odp-online-languages', 'odp-online-media', 'odp-online-nav', 'odp-online-notice', 'odp-online-panel-login-token', 'odp-online-quick', 'odp-online-regions', 'odp-online-rollserver', 'odp-online-seo', 'odp-online-servermerge', 'odp-online-servers', 'odp-online-sitemap', 'odp-online-special', 'odp-online-specialfile', 'odp-online-themes', 'odp-online-user-play-log', 'odp-online-website-templates', 'odp-online-whitelist']
 
-for region in regions:
+for table in tables:
     # ec2_tag('default', region)
-    dynamodb_tag('default', region)
+    dynamodb_tag('default', 'eu-central-1')
