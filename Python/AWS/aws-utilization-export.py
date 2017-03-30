@@ -24,7 +24,7 @@ region_contrast = {
     }
 
 # def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=datetime.datetime.utcnow().strftime('%Y%m')):
-def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='20'):
+def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='201702'):
     year = int(Date[:4])
     month = int(Date[-2:])
 
