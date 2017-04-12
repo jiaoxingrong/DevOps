@@ -239,7 +239,9 @@ def GetElasticache(profile,region,report_filename,compare_date=0):
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/ElastiCache', Dimensions, metric)
             try:
                 DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
-                file_body += str(DataPoints_AVG)
+                DataPoints_MIN = '%.2f,' % (min(DataPoints))
+                DataPoints_MAX = '%.2f,' % (max(DataPoints))
+                file_body += str(DataPoints_AVG) + DataPoints_MIN + DataPoints_MAX
             except Exception, e:
                 print Exception,":", e
         file_body += region_name + '\n'
@@ -256,6 +258,6 @@ if __name__ == '__main__':
     report_filename = 'aws-utilization-'
     for region in Regions:
         # GetEC2('platform', region, report_filename + '-EC2-' + today + '.csv')
-        GetRDS('platform', region, report_filename + '-RDS-' + today + '.csv')
+        # GetRDS('platform', region, report_filename + '-RDS-' + today + '.csv')
         # GetRedshift('platform', region, report_filename + '-Redshift-' + today + '.csv')
-        # GetElasticache('platform', region, report_filename + '-ElastiCache-' + today + '.csv')
+        GetElasticache('platform', region, report_filename + '-ElastiCache-' + today + '.csv')

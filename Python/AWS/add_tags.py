@@ -4,7 +4,7 @@
 import boto3
 
 
-def ec2_tag(profile, region, tables):
+def ec2_tag(profile, region):
     session = boto3.Session(
         profile_name=profile,
         region_name=region
@@ -59,29 +59,29 @@ def dynamodb_tag(profile, region):
         )
 
     dynamodb = session.client('dynamodb')
-    # tables = dynamodb.list_tables()
+    tables = dynamodb.list_tables()
     try:
-        for table in tables:
+        for table in tables.get('TableNames'):
             table_info = dynamodb.describe_table(
                     TableName=table
                 )
             table_arn = table_info.get('Table').get('TableArn')
-            add_tag = dynamodb.tag_resource(
-                ResourceArn=table_arn,
-                Tags=[
-                    {
-                        'Key': 'Project',
-                        'Value': 'odp3'
-                    },
-                ]
-            )
+            print table,region
+            # add_tag = dynamodb.tag_resource(
+            #     ResourceArn=table_arn,
+            #     Tags=[
+            #         {
+            #             'Key': 'Project',
+            #             'Value': ''
+            #         },
+            #     ]
+            # )
     except Exception, e:
         print e
 
 
 regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
-tables = ['odp-online-activity', 'odp-online-articles', 'odp-online-category', 'odp-online-game-publish-area', 'odp-online-games', 'odp-online-gift', 'odp-online-giftbag', 'odp-online-languages', 'odp-online-media', 'odp-online-nav', 'odp-online-notice', 'odp-online-panel-login-token', 'odp-online-quick', 'odp-online-regions', 'odp-online-rollserver', 'odp-online-seo', 'odp-online-servermerge', 'odp-online-servers', 'odp-online-sitemap', 'odp-online-special', 'odp-online-specialfile', 'odp-online-themes', 'odp-online-user-play-log', 'odp-online-website-templates', 'odp-online-whitelist']
 
-for table in tables:
+for region in regions:
     # ec2_tag('default', region)
-    dynamodb_tag('default', 'eu-central-1')
+    dynamodb_tag('mdata', region)
