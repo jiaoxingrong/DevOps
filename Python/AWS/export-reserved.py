@@ -89,6 +89,6 @@ def main(profile):
         # cachereserve(session, report_file, region_contrast.get(region), profile)
 
 if __name__ == '__main__':
-    profiles = ['mdata', 'platform']
+    profiles = ['mdata', 'platform', 'datacenter']
     for profile in profiles:
         main(profile)

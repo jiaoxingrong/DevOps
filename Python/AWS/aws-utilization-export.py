@@ -24,7 +24,7 @@ region_contrast = {
     }
 
 # def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date=datetime.datetime.utcnow().strftime('%Y%m')):
-def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='201702'):
+def GetCloudWatchData(profile, region, Namespace, Dimensions, MetricName, Date='201703'):
     year = int(Date[:4])
     month = int(Date[-2:])
 
@@ -108,7 +108,8 @@ def GetEC2(profile,region,report_filename,compare_date=0):
                         else:
                             ifHighUtil = 'no'
                         DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
-                        file_body += str(DataPoints_AVG)
+                        DataPoints_MAX = '%.2f,' % max(DataPoints)
+                        file_body += str(DataPoints_AVG) + DataPoints_MAX
 
                     file_body += region_name + '\n' + ifHighUtil + ''
                     f.write(file_body)
@@ -198,14 +199,15 @@ def GetRedshift(profile, region, report_filename, compare_date=0):
                 DataPoints = GetCloudWatchData(profile, region, 'AWS/Redshift', Dimensions, metric)
             try:
                 DataPoints_AVG = '%.2f,' % (sum(DataPoints)/len(DataPoints))
-                file_body += str(DataPoints_AVG)
+                DataPoints_MAX = '%.2f,' % max(DataPoints)
+                file_body += str(DataPoints_AVG) + DataPoints_MAX
             except Exception, e:
                 pass
         file_body += region_name + '\n'
         f.write(file_body)
     f.close()
 
-def GetElasticache(profile,region,report_filename,compare_date=0):
+def GetElastiCache(profile,region,report_filename,compare_date=0):
     region_name = region_contrast.get(region)
     f = file(report_filename,'a')
     f.seek(0,2)
@@ -251,13 +253,12 @@ def GetElasticache(profile,region,report_filename,compare_date=0):
 if __name__ == '__main__':
     # Dimensions = [{'Name': 'CacheClusterId', 'Value': 'console-oasgames'}]
     # print GetCloudWatchData('platform', 'us-east-1', 'AWS/ElastiCache', Dimensions, 'CPUUtilization')
-
     Regions = ['eu-west-1','ap-southeast-1','ap-southeast-2','eu-central-1','ap-northeast-2','ap-northeast-1','us-east-1','sa-east-1','us-west-1','us-west-2']
     today = time.strftime('%Y-%m-%d',time.localtime(time.time()))
-
     report_filename = 'aws-utilization-'
+    account = 'platform'
     for region in Regions:
-        # GetEC2('platform', region, report_filename + '-EC2-' + today + '.csv')
-        # GetRDS('platform', region, report_filename + '-RDS-' + today + '.csv')
-        # GetRedshift('platform', region, report_filename + '-Redshift-' + today + '.csv')
-        GetElasticache('platform', region, report_filename + '-ElastiCache-' + today + '.csv')
+        GetEC2(account, region, report_filename + '-EC2-' + today + '.csv')
+        GetRDS(account, region, report_filename + '-RDS-' + today + '.csv')
+        GetRedshift(account, region, report_filename + '-Redshift-' + today + '.csv')
+        GetElastiCache(account, region, report_filename + '-ElastiCache-' + today + '.csv')

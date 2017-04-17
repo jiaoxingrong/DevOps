@@ -23,6 +23,6 @@ def down_file(bucket,prefix,save_path):
                 file_storage_dir = os.path.dirname(save_path + os.sep + file.get('Key')) + file_hour
                 if not os.path.exists(file_storage_dir):
                     os.makedirs(file_storage_dir)
-                resource.meta.client.download_file(bucket,file.get('Key'),file_storage_dir + '/' + file.get('Key').split('/')[-1])
+                response = resource.meta.client.download_file(bucket, file.get('Key'), file_storage_dir + '/' + file.get('Key').split('/')[-1])
 
 down_file(bucket,down_prefix,'/data/testdown')
