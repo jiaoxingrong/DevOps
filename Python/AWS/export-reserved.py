@@ -38,7 +38,6 @@ def rdsreserve(session, report_file, region_name, profile):
 def redshiftreserve(session, report_file, region_name, profile):
     redshift = session.client('redshift')
     response = redshift.describe_reserved_nodes()
-    print response
     if not response.get('ReservedDBInstances'):
         return
 
@@ -83,10 +82,10 @@ def main(profile):
                 profile_name=profile,
                 region_name=region
             )
-        # ec2reserve(session, report_file, region_contrast.get(region), profile)
-        # rdsreserve(session, report_file, region_contrast.get(region), profile)
+        ec2reserve(session, report_file, region_contrast.get(region), profile)
+        rdsreserve(session, report_file, region_contrast.get(region), profile)
         redshiftreserve(session, report_file, region_contrast.get(region), profile)
-        # cachereserve(session, report_file, region_contrast.get(region), profile)
+        cachereserve(session, report_file, region_contrast.get(region), profile)
 
 if __name__ == '__main__':
     profiles = ['mdata', 'platform', 'datacenter']
