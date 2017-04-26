@@ -8,7 +8,6 @@ __mtime__ = '2017/3/10'
 """
 
 import boto3
-import time
 session = boto3.Session(
     profile_name='beijing',
     region_name='cn-north-1'
