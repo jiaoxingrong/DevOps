@@ -4,20 +4,6 @@
 __title__ = ''
 __author__ = 'Jerome'
 __mtime__ = '16/9/13'
-# code is far away from bugs with the god animal protecting
-    I love animals. They taste delicious.
-             ┏┓   ┏┓
-            ┏┛┻━━━┛┻┓
-            ┃    ☃   ┃
-            ┃ ┳┛  ┗┳┃
-            ┃    ┻  ┃
-            ┗━┓   ┏━┛
-              ┃   ┗━━━┓
-              ┃ 神兽保佑 ┣┓
-              ┃ 永无BUG ! ┏┛
-              ┗┓┓┏━┳┓┏┛
-               ┃┫┫ ┃┫┫
-               ┗┻┛ ┗┻┛
 """
 import json
 import urllib2
@@ -25,6 +11,7 @@ from urllib2 import URLError
 
 # 格式：zabbix地址，zabbix帐号，zabbix密码，邮件标题
 zabbix_addresses = ['http://s.zabbix.brotlab.net/zabbix,admin,cYU25jjQzFmQmZqv,test1']
+
 
 class ZabbixTools:
     def __init__(self, address, username, password):
@@ -67,10 +54,13 @@ class ZabbixTools:
             "jsonrpc": "2.0",
             "method": "trigger.get",
             "params": {
+                "expandComment": "true",
+                "expandDescription": "true",
                 "output": [
                     "triggerid",
                     "description",
-                    "priority"
+                    "priority",
+                    "lastchange",
                 ],
                 "filter": {
                     "value": 1,
@@ -92,12 +82,12 @@ class ZabbixTools:
         try:
             result = urllib2.urlopen(request)
         except URLError as e:
-            print "Error as ", e
+            return "Error as ", e
         else:
             response = json.loads(result.read())
             result.close()
             issues = response['result']
-	    print issues
+            # print issues
             # content = ''
             # if issues:
             #     for line in issues:

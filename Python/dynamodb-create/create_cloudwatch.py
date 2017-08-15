@@ -8,6 +8,7 @@ __mtime__ = '2017/2/9'
 """
 
 import boto3
+import time
 
 
 class DynamoDBCloudWatch:
@@ -23,7 +24,11 @@ class DynamoDBCloudWatch:
         self.alarm_action = 'arn:aws:sns:' + region + ':027999362592:dynamodb'
 
     def get_all_dynamodb(self):
-        tables = self.dynamodb.list_tables().get('TableNames')
+        paginator = self.dynamodb.get_paginator('list_tables')
+        tables = []
+        for page in paginator.paginate():
+            tables.extend(page.get('TableNames'))
+
         return tables
     
     def get_table_all_index(self, table):
@@ -120,6 +125,42 @@ def main():
                 for index in dynamodb_table_indexes:
                     dynamodb.indexes_add_alarm(dynamodb_table, index)
                     print 'region: %s, table: %s, index: %s, alarm add success!' % (region, dynamodb_table, index)
-                    
+
+
+def update_dynamodb(profile, region):
+    dynamodb = DynamoDBCloudWatch(profile, region)
+    tables = dynamodb.get_all_dynamodb()
+    for table in tables:
+        gsi_update_data_list = []
+        dynamodb_table_indexes = dynamodb.get_table_all_index(table)
+        if dynamodb_table_indexes:
+            for index in dynamodb_table_indexes:
+                gsi_update_data = {
+                                'Update': {
+                                    'IndexName': index,
+                                    'ProvisionedThroughput': {
+                                        'ReadCapacityUnits': 1,
+                                        'WriteCapacityUnits': 1
+                                    }
+                                }
+                            }
+                gsi_update_data_list.append(gsi_update_data)
+            try:
+                response = dynamodb.dynamodb.update_table(
+                    TableName=table,
+                    ProvisionedThroughput={
+                        'ReadCapacityUnits': 1,
+                        'WriteCapacityUnits': 1
+                    },
+                    GlobalSecondaryIndexUpdates=gsi_update_data_list,
+                )
+                
+                print response
+                time.sleep(5)
+                
+            except Exception, e:
+                print Exception, e
+                
 if __name__ == '__main__':
-    main()
+    # main()
+    update_dynamodb('beijing', 'cn-north-1')
