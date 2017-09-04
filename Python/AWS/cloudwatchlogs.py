@@ -47,14 +47,8 @@ def putmetric(logsgroup, parameter, snsArn):
         MetricName=metricName,
         Namespace='LogMetrics',
         Statistic='Sum',
-        Dimensions=[
-            {
-                'Name': 'string',
-                'Value': 'string'
-            },
-        ],
         Period=60,
-        EvaluationPeriods=60,
+        EvaluationPeriods=1,
         Threshold=1,
         ComparisonOperator='GreaterThanOrEqualToThreshold',
     )
@@ -63,7 +57,7 @@ def putmetric(logsgroup, parameter, snsArn):
 
 def main():
     # logsgroup = ['oas-pay2-web1-fbpayv2', 'oas-pay2-web1-getPlacedOrder', 'oas-pay2-web1-mob_pay_callback', 'oas-pay2-web1-oaspay', 'oas-pay2-web1-pay_callback', 'oas-pay2-web1-redirect', 'oas-pay2-web2-fbpayv2', 'oas-pay2-web2-getPlacedOrder', 'oas-pay2-web2-mob_pay_callback', 'oas-pay2-web2-oaspay', 'oas-pay2-web2-pay_callback', 'oas-pay2-web2-redirect']
-    logsgroup = ['oas-odp-api1-shutdown', 'oas-odp-api2-shutdown', 'oas-odp-loar-web1-shutdown', 'oas-odp-loar-web2-shutdown', 'oas-odp-web1-shutdown', 'oas-odp-web2-shutdown', 'oas-odp-web3-shutdown']
+    logsgroup = ['oas-passport-web1-alert', 'oas-passport-web2-alert', 'oas-passport-web3-alert', 'oas-passport-web4-alert']
     arn = 'arn:aws:sns:us-east-1:027999362592:apollo-app-error'
     for group in logsgroup:
         creategroup(group)
