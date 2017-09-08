@@ -57,8 +57,8 @@ def putmetric(logsgroup, parameter, snsArn):
 
 def main():
     # logsgroup = ['oas-pay2-web1-fbpayv2', 'oas-pay2-web1-getPlacedOrder', 'oas-pay2-web1-mob_pay_callback', 'oas-pay2-web1-oaspay', 'oas-pay2-web1-pay_callback', 'oas-pay2-web1-redirect', 'oas-pay2-web2-fbpayv2', 'oas-pay2-web2-getPlacedOrder', 'oas-pay2-web2-mob_pay_callback', 'oas-pay2-web2-oaspay', 'oas-pay2-web2-pay_callback', 'oas-pay2-web2-redirect']
-    logsgroup = ['oas-passport-web1-alert', 'oas-passport-web2-alert', 'oas-passport-web3-alert', 'oas-passport-web4-alert']
-    arn = 'arn:aws:sns:us-east-1:027999362592:apollo-app-error'
+    logsgroup = ["oas-loes-shutdown-web1", "oas-loes-shutdown-web2", "oas-lopl-shutdown-web1", "oas-lopl-shutdown-web2", "oas-lotr-shutdown-web1", "oas-lotr-shutdown-web2"]
+    arn = 'arn:aws:sns:us-east-1:027999362592:aks-app-error-alert-virginia'
     for group in logsgroup:
         creategroup(group)
         putmetric(group, 'ALERT', arn)
